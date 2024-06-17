@@ -123,7 +123,8 @@ for iii=1:Number_Fnodes_Domain
     end
 end
 c=GP(1,1:Number_Monomials)';
-Am=A(:,:,1)^-1;
+%Am=A(:,:,1)^-1;
+Am=inv(A(:,:,1));
 
 gamma=zeros(Number_Monomials,3);
 

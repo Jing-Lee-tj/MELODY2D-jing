@@ -76,6 +76,9 @@ for Body=1:size(BODIES_STATIC,1)
                 fprintf(fid_data,'%s',' ');
                 fprintf(fid_data,'%0.16g\n',BODIES_STATIC(Body,1).INTEGRATION{gp,5});
                 table=BODIES_STATIC(Body,1).INTEGRATION{gp,1}-1;
+                %
+                BODIES_STATIC(Body,1).INTEGRATION{gp,2}=CreateListDOF(BODIES_STATIC(Body,1).INTEGRATION{gp,1});
+                %
                 for i=1:size(BODIES_STATIC(Body,1).INTEGRATION{gp,1},1)
                     table(i,2:3)=BODIES_STATIC(Body,1).INTEGRATION{gp,2}(2*i-1:2*i,1)'-1;
                 end
@@ -129,7 +132,6 @@ for Body=1:size(BODIES_STATIC,1)
 
         %%% STIFFNESS AND DAMPING MATRICES %%%
         fprintf(fid_data,'%s\n','MATRICES');
-        %table=[];
         table=zeros(1e7,4);
         Nline=1;
         for i=1:size(BODIES_STATIC(Body,1).STIFFNESS_MATRIX,1)
@@ -298,19 +300,6 @@ fprintf(fid_data,'%0.16g\n',GRAVITY(2));
 fprintf(fid_data,'%s\n',' ');
 fprintf(fid_data,'%s\n',' ');
 
-%%% PLOTTING OPTIONS %%%
-%fprintf(fid_data,'%s\n','PLOTTING');
-%fprintf(fid_data,'%0.16g\n',ACTIVATE_PLOT);
-%fprintf(fid_data,'%0.16g',GRAPHIC_BOUNDARIES(1));
-%fprintf(fid_data,'%s',' ');
-%fprintf(fid_data,'%10.10g',GRAPHIC_BOUNDARIES(2));
-%fprintf(fid_data,'%s',' ');
-%fprintf(fid_data,'%0.16g',GRAPHIC_BOUNDARIES(3));
-%fprintf(fid_data,'%s',' ');
-%fprintf(fid_data,'%0.16g\n',GRAPHIC_BOUNDARIES(4));
-%fprintf(fid_data,'%s\n',' ');
-%fprintf(fid_data,'%s\n',' ');
-
 %%% NUMBER_BODIES %%%
 fprintf(fid_data,'%s\n','NUMBER_BODIES');
 fprintf(fid_data,'%0.16g\n',size(BODIES_STATIC,1));
@@ -327,6 +316,79 @@ else
         fprintf(fid_data,'%s\n',MONITORINGS{i,1});
     end
 end
+fprintf(fid_data,'%s\n',' ');
+fprintf(fid_data,'%s\n',' ');
+
+%%% GRAPHIC_GRAINS %%%
+fprintf(fid_data,'%s\n','GRAPHIC_GRAINS');
+fprintf(fid_data,'%0.16g',To_Plot(1));fprintf(fid_data,'%s\n',' Body Index');
+fprintf(fid_data,'%0.16g',To_Plot(2));fprintf(fid_data,'%s\n',' Initial Position');
+fprintf(fid_data,'%0.16g',To_Plot(3));fprintf(fid_data,'%s\n',' Current Position');
+fprintf(fid_data,'%0.16g',To_Plot(4));fprintf(fid_data,'%s\n',' Displacement');
+fprintf(fid_data,'%0.16g',To_Plot(5));fprintf(fid_data,'%s\n',' Velocity');
+fprintf(fid_data,'%0.16g',To_Plot(6));fprintf(fid_data,'%s\n',' Acceleration');
+fprintf(fid_data,'%0.16g',To_Plot(7));fprintf(fid_data,'%s\n',' Force');
+fprintf(fid_data,'%0.16g',To_Plot(8));fprintf(fid_data,'%s\n',' Internal Force');
+fprintf(fid_data,'%0.16g',To_Plot(9));fprintf(fid_data,'%s\n',' Contact Force');
+fprintf(fid_data,'%0.16g',To_Plot(10));fprintf(fid_data,'%s\n',' Body Force');
+fprintf(fid_data,'%0.16g',To_Plot(11));fprintf(fid_data,'%s\n',' Dirichlet Force');
+fprintf(fid_data,'%0.16g',To_Plot(12));fprintf(fid_data,'%s\n',' Neumann Force');
+fprintf(fid_data,'%0.16g',To_Plot(13));fprintf(fid_data,'%s\n',' Damping Force');
+fprintf(fid_data,'%0.16g',To_Plot(14));fprintf(fid_data,'%s\n',' Alid Force');
+fprintf(fid_data,'%0.16g',To_Plot(15));fprintf(fid_data,'%s\n',' Jacobian');
+fprintf(fid_data,'%0.16g',To_Plot(16));fprintf(fid_data,'%s\n',' Cauchy XX Stress');
+fprintf(fid_data,'%0.16g',To_Plot(17));fprintf(fid_data,'%s\n',' Cauchy YY Stress');
+fprintf(fid_data,'%0.16g',To_Plot(18));fprintf(fid_data,'%s\n',' Cauchy XY Stress');
+fprintf(fid_data,'%0.16g',To_Plot(19));fprintf(fid_data,'%s\n',' Cauchy ZZ Stress');
+fprintf(fid_data,'%0.16g',To_Plot(20));fprintf(fid_data,'%s\n',' Tresca Stress');
+fprintf(fid_data,'%0.16g',To_Plot(21));fprintf(fid_data,'%s\n',' Von Mises Stress');
+fprintf(fid_data,'%0.16g',To_Plot(22));fprintf(fid_data,'%s\n',' Major Principal Stress');
+fprintf(fid_data,'%0.16g',To_Plot(23));fprintf(fid_data,'%s\n',' Intermediate Principal Stress');
+fprintf(fid_data,'%0.16g',To_Plot(24));fprintf(fid_data,'%s\n',' Minor Principal Stress');
+fprintf(fid_data,'%0.16g',To_Plot(25));fprintf(fid_data,'%s\n',' Spherical Stress');
+fprintf(fid_data,'%0.16g',To_Plot(26));fprintf(fid_data,'%s\n',' Green-Lagrange XX strain');
+fprintf(fid_data,'%0.16g',To_Plot(27));fprintf(fid_data,'%s\n',' Green-Lagrange YY strain');
+fprintf(fid_data,'%0.16g',To_Plot(28));fprintf(fid_data,'%s\n',' Green-Lagrange XY strain');
+fprintf(fid_data,'%0.16g',To_Plot(29));fprintf(fid_data,'%s\n',' Norm of the Green-Lagrange strain tensor');
+fprintf(fid_data,'%0.16g',To_Plot(30));fprintf(fid_data,'%s\n',' Body Damage');
+fprintf(fid_data,'%0.16g',To_Plot(31));fprintf(fid_data,'%s\n',' Body Relative Damage');
+fprintf(fid_data,'%0.16g',To_Plot(32));fprintf(fid_data,'%s\n',' Normalized Displacement Error');
+fprintf(fid_data,'%0.16g',To_Plot(33));fprintf(fid_data,'%s\n',' Displacement Error');
+fprintf(fid_data,'%0.16g',To_Plot(34));fprintf(fid_data,'%s\n',' Internal Work');
+fprintf(fid_data,'%0.16g',To_Plot(35));fprintf(fid_data,'%s\n',' Contact Work');
+fprintf(fid_data,'%0.16g',To_Plot(36));fprintf(fid_data,'%s\n',' Body Work');
+fprintf(fid_data,'%0.16g',To_Plot(37));fprintf(fid_data,'%s\n',' Dirichlet Work');
+fprintf(fid_data,'%0.16g',To_Plot(38));fprintf(fid_data,'%s\n',' Neumann Work');
+fprintf(fid_data,'%0.16g',To_Plot(39));fprintf(fid_data,'%s\n',' Damping Work');
+fprintf(fid_data,'%0.16g',To_Plot(40));fprintf(fid_data,'%s\n',' Alid Work');
+fprintf(fid_data,'%0.16g',To_Plot(41));fprintf(fid_data,'%s\n',' Temperature');
+fprintf(fid_data,'%0.16g',To_Plot(42));fprintf(fid_data,'%s\n',' Scaling Parameter');
+fprintf(fid_data,'%0.16g',To_Plot(43));fprintf(fid_data,'%s\n',' Active Contacts');
+fprintf(fid_data,'%0.16g',To_Plot(44));fprintf(fid_data,'%s\n',' Contacting Bodies');
+fprintf(fid_data,'%s\n',' ');
+fprintf(fid_data,'%s\n',' ');
+
+%%% GRAPHIC_CHAINS %%%
+fprintf(fid_data,'%s\n','GRAPHIC_CHAINS');
+fprintf(fid_data,'%0.16g',Chains_Parameters(1));
+fprintf(fid_data,'%s',' ');
+fprintf(fid_data,'%0.16g\n',Chains_Parameters(2));
+fprintf(fid_data,'%s\n',' ');
+fprintf(fid_data,'%s\n',' ');
+
+%%% GRAPHIC_FIELDS %%%
+fprintf(fid_data,'%s\n','GRAPHIC_FIELDS');
+fprintf(fid_data,'%0.16g',Fields_Parameters(1));
+fprintf(fid_data,'%s',' ');
+fprintf(fid_data,'%0.16g',Fields_Parameters(2));
+fprintf(fid_data,'%s',' ');
+fprintf(fid_data,'%0.16g',Fields_Parameters(3));
+fprintf(fid_data,'%s',' ');
+fprintf(fid_data,'%0.16g',Fields_Parameters(4));
+fprintf(fid_data,'%s',' ');
+fprintf(fid_data,'%0.16g',Fields_Parameters(5));
+fprintf(fid_data,'%s',' ');
+fprintf(fid_data,'%0.16g\n',Fields_Parameters(6));
 fprintf(fid_data,'%s\n',' ');
 fprintf(fid_data,'%s\n',' ');
 
@@ -361,43 +423,6 @@ else
         fprintf(fid_data,'%s\n',DEACTIVATIONS{i,1});
     end
 end
-fprintf(fid_data,'%s\n',' ');
-fprintf(fid_data,'%s\n',' ');
-
-%%% GRAPHIC %%%
-fprintf(fid_data,'%s\n','GRAPHIC');
-fprintf(fid_data,'%0.16g',To_Plot(1));fprintf(fid_data,'%s\n',' Body Index');
-fprintf(fid_data,'%0.16g',To_Plot(2));fprintf(fid_data,'%s\n',' Initial Position');
-fprintf(fid_data,'%0.16g',To_Plot(3));fprintf(fid_data,'%s\n',' Current Position');
-fprintf(fid_data,'%0.16g',To_Plot(4));fprintf(fid_data,'%s\n',' Displacement');
-fprintf(fid_data,'%0.16g',To_Plot(5));fprintf(fid_data,'%s\n',' Velocity');
-fprintf(fid_data,'%0.16g',To_Plot(6));fprintf(fid_data,'%s\n',' Acceleration');
-fprintf(fid_data,'%0.16g',To_Plot(7));fprintf(fid_data,'%s\n',' Force');
-fprintf(fid_data,'%0.16g',To_Plot(8));fprintf(fid_data,'%s\n',' Internal Force');
-fprintf(fid_data,'%0.16g',To_Plot(9));fprintf(fid_data,'%s\n',' Contact Force');
-fprintf(fid_data,'%0.16g',To_Plot(10));fprintf(fid_data,'%s\n',' Body Force');
-fprintf(fid_data,'%0.16g',To_Plot(11));fprintf(fid_data,'%s\n',' Dirichlet Force');
-fprintf(fid_data,'%0.16g',To_Plot(12));fprintf(fid_data,'%s\n',' Neumann Force');
-fprintf(fid_data,'%0.16g',To_Plot(13));fprintf(fid_data,'%s\n',' Damping Force');
-fprintf(fid_data,'%0.16g',To_Plot(14));fprintf(fid_data,'%s\n',' Alid Force');
-fprintf(fid_data,'%0.16g',To_Plot(15));fprintf(fid_data,'%s\n',' Jacobian');
-fprintf(fid_data,'%0.16g',To_Plot(16));fprintf(fid_data,'%s\n',' Cauchy XX Stress');
-fprintf(fid_data,'%0.16g',To_Plot(17));fprintf(fid_data,'%s\n',' Cauchy YY Stress');
-fprintf(fid_data,'%0.16g',To_Plot(18));fprintf(fid_data,'%s\n',' Cauchy XY Stress');
-fprintf(fid_data,'%0.16g',To_Plot(19));fprintf(fid_data,'%s\n',' Cauchy ZZ Stress');
-fprintf(fid_data,'%0.16g',To_Plot(20));fprintf(fid_data,'%s\n',' Tresca Stress');
-fprintf(fid_data,'%0.16g',To_Plot(21));fprintf(fid_data,'%s\n',' Von Mises Stress');
-fprintf(fid_data,'%0.16g',To_Plot(22));fprintf(fid_data,'%s\n',' Major Principal Stress');
-fprintf(fid_data,'%0.16g',To_Plot(23));fprintf(fid_data,'%s\n',' Intermediate Principal Stress');
-fprintf(fid_data,'%0.16g',To_Plot(24));fprintf(fid_data,'%s\n',' Minor Principal Stress');
-fprintf(fid_data,'%0.16g',To_Plot(25));fprintf(fid_data,'%s\n',' Spherical Stress');
-fprintf(fid_data,'%0.16g',To_Plot(26));fprintf(fid_data,'%s\n',' Green-Lagrange XX strain');
-fprintf(fid_data,'%0.16g',To_Plot(27));fprintf(fid_data,'%s\n',' Green-Lagrange YY strain');
-fprintf(fid_data,'%0.16g',To_Plot(28));fprintf(fid_data,'%s\n',' Green-Lagrange XY strain');
-fprintf(fid_data,'%0.16g',To_Plot(29));fprintf(fid_data,'%s\n',' Norm of the Green-Lagrange strain tensor');
-fprintf(fid_data,'%0.16g',To_Plot(30));fprintf(fid_data,'%s\n',' Body Damage');
-fprintf(fid_data,'%0.16g',To_Plot(31));fprintf(fid_data,'%s\n',' Normalized Displacement Error');
-fprintf(fid_data,'%0.16g',To_Plot(32));fprintf(fid_data,'%s\n',' Displacement Error');
 fprintf(fid_data,'%s\n',' ');
 fprintf(fid_data,'%s\n',' ');
 
@@ -599,7 +624,7 @@ for Body=1:size(BODIES_STATIC,1)
             fprintf(fid_data,'%s',' ');
             fprintf(fid_data,'%s\n',BODIES_STATIC(Body,1).BORDERS{Border,4});
             fprintf(fid_data,'%0.16g\n',BODIES_STATIC(Body,1).BORDERS{Border,2});
-            if isempty(BODIES_STATIC(Body,1).DIRICHLET_BC{Border,1}) & isempty(BODIES_STATIC(Body,1).NEUMANN_BC{Border,1})
+            if isempty(BODIES_STATIC(Body,1).DIRICHLET_BC{Border,1}) && isempty(BODIES_STATIC(Body,1).NEUMANN_BC{Border,1})
                 fprintf(fid_data,'%s\n',['X None']);
             elseif isempty(BODIES_STATIC(Body,1).DIRICHLET_BC{Border,1})==0
                 if strcmp(BODIES_STATIC(Body,1).DIRICHLET_BC{Border,2},'Driven')

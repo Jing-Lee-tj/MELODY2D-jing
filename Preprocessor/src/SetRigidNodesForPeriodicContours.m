@@ -65,6 +65,7 @@ end
 Contour21=flipud(Contour12);
 Contour21(:,1)=ones(size(Contour21,1),1)*Periodic_Boundaries(1);
 Contour=cat(1,InterpContour1,Contour12,InterpContour2,Contour21);
+% Contour=cat(1,InterpContour2,Contour21,InterpContour1,Contour12);
 Contour=[Contour;Contour(1,:)];
 
 %%%%
@@ -76,8 +77,10 @@ Contour=[Contour;Contour(1,:)];
 %%%%
 
 % Position the field nodes and triangulate
-xdist=max(Contour(:,1))-min(Contour(:,1));
-ydist=max(Contour(:,2))-min(Contour(:,2));
+% xdist=max(Contour(:,1))-min(Contour(:,1));
+% ydist=max(Contour(:,2))-min(Contour(:,2));
+xdist = 0;
+ydist = 0;
 Box=[min(Contour(:,1))-xdist/100,min(Contour(:,2))-ydist/100;max(Contour(:,1))+xdist/100,max(Contour(:,2))+ydist/100];
 pmin=min(Contour(:,2));
 pmax=max(Contour(:,2));
@@ -86,7 +89,7 @@ fmax=Average_Nodal_Distance*Mesh_Ratio(2);
 a=(fmax-fmin)/(pmax-pmin);
 b=fmin-pmin*a;
 fh=@(p) b+a*p(:,2);
-[INITIAL_POSITIONS,TRIANGULATION]=distmesh2d_plot(Activate_Plot,0.01,@dpoly,fh,4*0.99*Average_Nodal_Distance,Box,Contour,Contour);
+[INITIAL_POSITIONS,TRIANGULATION]=distmesh2d_plot(Activate_Plot,0.001,@dpoly,fh,4*0.99*Average_Nodal_Distance,Box,Contour,Contour);
 
 % Fix the orientation of the triangular facets
 for i=1:size(TRIANGULATION,1)

@@ -43,7 +43,7 @@ void Euler_step(
             Bodies[i].Initialize_contact_forces() ;
             //Bodies[i].Update_bc(Time) ;
             Bodies[i].Update_borders(Xmin_period, Xmax_period) ;
-            Bodies[i].Update_contacts(Bodies, Xmin_period, Xmax_period) ;
+            Bodies[i].Update_contacts(Bodies, Deltat, Xmin_period, Xmax_period) ;
         }
         #pragma omp for schedule(dynamic)
         for (int i=0 ; i<Nb_bodies ; i++)
@@ -81,6 +81,7 @@ void Euler_step(
             Bodies[i].Apply_Euler(Deltat) ;
             Bodies[i].Update_kinematics() ;
             Bodies[i].Update_current_positions() ;
+            Bodies[i].Update_damage() ;
         }
     }
     Time += Deltat ;                                                                            // SEQUENTIAL //
@@ -169,7 +170,7 @@ void Solver_step(
                 Bodies[i].Initialize_contact_forces() ;
                 //Bodies[i].Update_bc(Time) ;
                 Bodies[i].Update_borders(Xmin_period, Xmax_period) ;
-                Bodies[i].Update_contacts(Bodies, Xmin_period, Xmax_period) ;
+                Bodies[i].Update_contacts(Bodies, Deltat*0.5, Xmin_period, Xmax_period) ;
             }
 
             // 2 //
@@ -212,6 +213,7 @@ void Solver_step(
                 Bodies[i].Apply_Euler(Deltat*0.5) ;
                 Bodies[i].Update_kinematics() ;
                 Bodies[i].Update_current_positions() ;
+                Bodies[i].Update_damage() ;
             }
 
             //********************************************//
@@ -227,7 +229,7 @@ void Solver_step(
                 Bodies[i].Initialize_contact_forces() ;
                 Bodies[i].Update_bc(Time+Deltat*0.5) ;
                 Bodies[i].Update_borders(Xmin_period, Xmax_period) ;
-                Bodies[i].Update_contacts(Bodies, Xmin_period, Xmax_period) ;
+                Bodies[i].Update_contacts(Bodies, Deltat*0.5, Xmin_period, Xmax_period) ;
             }
 
             // 2 //
@@ -269,6 +271,7 @@ void Solver_step(
                 Bodies[i].Apply_Euler(Deltat*0.5) ;
                 Bodies[i].Update_kinematics() ;
                 Bodies[i].Update_current_positions() ;
+                Bodies[i].Update_damage() ;
                 Bodies[i].Compute_error() ;
                 //cout << "40 " << i << endl ;
 

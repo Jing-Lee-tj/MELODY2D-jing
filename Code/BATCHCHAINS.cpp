@@ -21,7 +21,7 @@ using namespace std ;
 #include "Graphic.h"
 #include "Monitoring.h"
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     // CREATE VARIABLES //
     string Simulation_name ;
@@ -38,8 +38,8 @@ main(int argc, char **argv)
     int Number_save, Number_print, Number_iteration ;
     double Xmin_period, Xmax_period, Penalty ;
     double Xgravity, Ygravity ;
-    int Activate_plot ;
-    double Xmin_plot, Xmax_plot, Ymin_plot, Ymax_plot ;
+    double Chains_typical_pressure, Chains_size_ratio ;
+    double Fields_xmin, Fields_xmax, Fields_ymin, Fields_ymax, Fields_step, Fields_dist ;
     int Nb_bodies ;
     vector<Body> Bodies ;
     int Nb_monitored ;
@@ -50,9 +50,9 @@ main(int argc, char **argv)
     vector<Spy> Spies ;
     int Nb_regions = 0 ;
     vector<vector<int>> Regions ;
-    vector<int> flags(11) ;
+    vector<int> flags(12) ;
     //int flag_failure = 0 ;
-    vector<int> To_Plot(40) ;
+    vector<int> To_Plot(44) ;
     vector<vector<int>> Contacts_Table ;
 
     // LOAD STATIC DATA //
@@ -63,25 +63,27 @@ main(int argc, char **argv)
                  Max_mass_scaling, Control_parameter_mass_scaling, Error_factor_mass_scaling, Decrease_factor_mass_scaling,
                  Save_period, Print_period, Contact_update_period,
                  Xmin_period, Xmax_period, Penalty, Xgravity, Ygravity,
-                 Activate_plot,	Xmin_plot,	Xmax_plot,	Ymin_plot,	Ymax_plot,
+                 Chains_typical_pressure, Chains_size_ratio,
+                 Fields_xmin, Fields_xmax, Fields_ymin, Fields_ymax, Fields_step, Fields_dist,
                  Nb_monitored, Monitored, Nb_deactivated, Deactivated, Nb_spies, Spies,
                  Nb_regions, Regions, Nb_bodies, Bodies, To_Plot ) ;
 
-    double Typical_pressure = atof(argv[1]) ;
-    double Size_ratio = atof(argv[2]) ;
-    int istart = atoi(argv[3]) ;
-    int interval = atoi(argv[4]) ;
-    int iend = atoi(argv[5]) ;
+    int istart = atoi(argv[1]) ;
+    int interval = atoi(argv[2]) ;
+    int iend = atoi(argv[3]) ;
 
     for (int i(istart) ; i<=iend ; i+=interval)
     {
         Number_save = i ;
+        for (int j=0 ; j<(int)flags.size() ; j++)
+            flags[j] = 0 ;
+        flags[7] = 1 ;
         Load_dynamic( Number_save, Number_print,
                       Time, Number_iteration, Deltat, Solver,
                       Next_save,	Next_print, Next_contact_update,
                       Xmin_period, Xmax_period,
                       Bodies, flags ) ;
         Number_print = i ;
-        Write_chains(Nb_bodies, Bodies, Number_iteration, Number_save, Number_print, Time, Xmin_period, Xmax_period, Typical_pressure, Size_ratio) ;
+        Write_chains(Nb_bodies, Bodies, Number_iteration, Number_save, Number_print, Time, Xmin_period, Xmax_period, Chains_typical_pressure, Chains_size_ratio) ;
     }
 }

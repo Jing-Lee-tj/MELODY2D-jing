@@ -470,6 +470,42 @@ void Update_proximity(
             }
         }
     }
+
+    // Counting contacts //
+    vector<vector<int>> Contacts(Nb_bodies) ;
+    for (int i=0 ; i<Nb_bodies ; i++)
+            Contacts[i].push_back({0}) ;
+    for (int i=0 ; i<Nb_bodies ; i++)
+    {
+        if (Bodies[i].status == "inactive")
+            continue ;
+        for (int j=0 ; j<Bodies[i].nb_contact_elements ; j++)
+        {
+            if ((Bodies[i].contact_elements[j].fx == 0.) && (Bodies[i].contact_elements[j].fy == 0.))
+                continue ;
+            Contacts[Bodies[i].contact_elements[j].bodyM].push_back(i) ;
+            Contacts[Bodies[i].contact_elements[j].bodyM][0]++ ;
+            Contacts[i].push_back(Bodies[i].contact_elements[j].bodyM) ;
+            Contacts[i][0]++ ;
+        }
+    }
+    vector<int> Incontact(Nb_bodies) ;
+    for (int i=0 ; i<Nb_bodies ; i++)
+    {
+        if (Bodies[i].status == "inactive")
+            continue ;
+        for (int j=0 ; j<Nb_bodies ; j++)
+            Incontact[j]=0 ;
+        Bodies[i].nb_active_contacts = 0 ;
+        Bodies[i].nb_contacting_bodies = 0 ;
+        for (int j=1 ; j<Contacts[i][0]+1 ; j++ )
+        {
+            Bodies[i].nb_active_contacts++ ;
+            Incontact[Contacts[i][j]] = 1 ;
+        }
+        for (int j=0 ; j<Nb_bodies ; j++ )
+            Bodies[i].nb_contacting_bodies += Incontact[j];
+    }
 }
 
 
@@ -482,7 +518,7 @@ void Initialize_CZM(int Nb_bodies, vector<Body>& Bodies, int Nb_contact_laws, ve
 {
     cout << "Initializing cohesive bonds" << endl ;
     for (int i=0 ; i<Nb_bodies ; i++)
-        Bodies[i].Update_contacts(Bodies, Xmin_period, Xmax_period) ;
+        Bodies[i].Update_contacts(Bodies, 0., Xmin_period, Xmax_period) ;
     flags[3] = 0 ;
     int bodyM ;
     string contact_law_type, material_nameM, material_nameS, material1, material2 ;
@@ -509,11 +545,11 @@ void Initialize_CZM(int Nb_bodies, vector<Body>& Bodies, int Nb_contact_laws, ve
             if (contact_law_type=="CZMlinear")
             {
                 double gapinit = parameters[5] ;
-                Bodies[bodyS].contact_elements[icontact].nb_internal = 1 ;
+                Bodies[bodyS].contact_elements[icontact].nb_internal = 3 ;
                 if ( Bodies[bodyS].contact_elements[icontact].gapn < gapinit )
-                    Bodies[bodyS].contact_elements[icontact].internal = {0.} ;
+                    Bodies[bodyS].contact_elements[icontact].internal = {0., 0., 0.} ;
                 else
-                    Bodies[bodyS].contact_elements[icontact].internal = {1.} ;
+                    Bodies[bodyS].contact_elements[icontact].internal = {1., 0., 0.} ;
             }
             else if (contact_law_type=="CZMfatigue")
             {
@@ -526,7 +562,7 @@ void Initialize_CZM(int Nb_bodies, vector<Body>& Bodies, int Nb_contact_laws, ve
             }
             else if (contact_law_type=="BondedMohrCoulomb")
             {
-                double gapinit = parameters[10] ;
+                 double gapinit = parameters[10] ;
                 Bodies[bodyS].contact_elements[icontact].nb_internal = 3 ;
                 if ( Bodies[bodyS].contact_elements[icontact].gapn < gapinit )
                     Bodies[bodyS].contact_elements[icontact].internal = {0., 0., 0.} ;

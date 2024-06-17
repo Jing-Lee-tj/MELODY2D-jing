@@ -1,4 +1,4 @@
-function [INITIAL_POSITIONS,BORDERS,TRIANGULATION]=SetUnstructuredNodesForClosedContour(Contour,Interpolant,Average_Nodal_Distance,Mesh_Ratio,Activate_Plot)
+function [INITIAL_POSITIONS,BORDERS,TRIANGULATION]=SetUnstructuredNodesForPolygonContour(Contour,Interpolant,Average_Nodal_Distance,Mesh_Ratio,Activate_Plot)
 
 % Close the contour if needed
 if norm(Contour(1,:)-Contour(size(Contour,1),:))>1e-3*Average_Nodal_Distance
@@ -6,47 +6,74 @@ if norm(Contour(1,:)-Contour(size(Contour,1),:))>1e-3*Average_Nodal_Distance
 else
     Contour(size(Contour,1),:)=Contour(1,:);
 end
+Contours=cell(size(Contour,1)-1,1);
+Ncontours=size(Contours,1);
+for i=1:Ncontours
+    Contours{i,1}=[Contour(i,1),Contour(i,2);Contour(i+1,1),Contour(i+1,2)];
+end
 
 % Compute regular boundary nodes
-Ltot=0;
-Lengths=zeros(size(Contour,1)+1,1);
-for j=1:size(Contour,1)-1
-    Ltot=Ltot+sqrt((Contour(j+1,1)-Contour(j,1))^2+(Contour(j+1,2)-Contour(j,2))^2);
-    Lengths(j+1,1)=Ltot;
-end
-Ltot=Ltot+sqrt((Contour(j+1,1)-Contour(1,1))^2+(Contour(j+1,2)-Contour(1,2))^2);
-Lengths(j+2,1)=Ltot;
-Ninterp=ceil(Ltot/(Average_Nodal_Distance*Mesh_Ratio(2)));
-DistInterp=Ltot/Ninterp;
-InterpContour=zeros(Ninterp,2);
-InterpContour(1,:)=Contour(1,1:2);
-for i=2:Ninterp
-    D=(i-1)*DistInterp;
-    for j=1:size(Lengths,1)
-        if D>=Lengths(j,1) & D<=Lengths(j+1,1)
-            ratio=(D-Lengths(j,1))/(Lengths(j+1,1)-Lengths(j,1));
-            InterpContour(i,:)=(1-ratio)*Contour(j,1:2)+ratio*Contour(j+1,1:2);
-            break
+%Contour=[];
+%for n=1:Ncontours
+%    Ltot=sqrt((Contours{n,1}(2,1)-Contours{n,1}(1,1))^2+(Contours{n,1}(2,2)-Contours{n,1}(1,2))^2);
+%    Ninterp=ceil(Ltot/Average_Nodal_Distance);
+%    DistInterp=Ltot/Ninterp;
+%    InterpContour=zeros(Ninterp+1,2);
+%    InterpContour(1,:)=Contours{n,1}(1,1:2);
+%    InterpContour(size(InterpContour,1),:)=Contours{n,1}(size(Contours{n,1},1),1:2);
+%    for i=2:Ninterp
+%        D=(i-1)*DistInterp;
+%        ratio=D/Ltot;
+%        InterpContour(i,:)=(1-ratio)*Contours{n,1}(1,1:2)+ratio*Contours{n,1}(2,1:2);
+%    end
+%    if isempty(Contour)==0
+%        InterpContour=InterpContour(2:size(InterpContour,1),:);
+%    end
+%    Contour=cat(1,Contour,InterpContour);
+%end
+
+Contour=[];
+for n=1:Ncontours
+    Ltot=sqrt((Contours{n,1}(2,1)-Contours{n,1}(1,1))^2+(Contours{n,1}(2,2)-Contours{n,1}(1,2))^2);
+    Ninterp=ceil(1.5*Ltot/Average_Nodal_Distance);
+    DistInterp=Ltot/Ninterp;
+    InterpContour=zeros(Ninterp+1,2);
+    InterpContour(1,:)=Contours{n,1}(1,1:2);
+    InterpContour(end,:)=Contours{n,1}(end,1:2);
+    if Ninterp>1
+        for i=2:Ninterp
+            D=(i-1)*DistInterp;
+            ratio=D/Ltot;
+            InterpContour(i,:)=(1-ratio)*Contours{n,1}(1,1:2)+ratio*Contours{n,1}(2,1:2);
         end
     end
+    if isempty(Contour)==0
+        InterpContour=InterpContour(2:size(InterpContour,1),:);
+    end
+    Contour=cat(1,Contour,InterpContour);
 end
 
 % Position the field nodes and triangulate
-Box=[min(InterpContour(:,1)),min(InterpContour(:,2));max(InterpContour(:,1)),max(InterpContour(:,2))];
+Box=[min(Contour(:,1)),min(Contour(:,2));max(Contour(:,1)),max(Contour(:,2))];
 %
-xc=mean(InterpContour(:,1));
-yc=mean(InterpContour(:,2));
-rmax=max(((InterpContour(:,1)-xc).^2+(InterpContour(:,2)-yc).^2).^0.5);
-pmin=0;
-pmax=rmax;
-fmin=Average_Nodal_Distance*Mesh_Ratio(1);
-fmax=Average_Nodal_Distance*Mesh_Ratio(2);
-a=(fmax-fmin)/rmax;
-b=fmin;
-fh=@(p) b+a*((p(:,1)-xc).^2+(p(:,2)-yc).^2).^0.5;
-[INITIAL_POSITIONS,TRIANGULATION]=distmesh2d_plot(Activate_Plot,0.01,@dpoly,fh,Average_Nodal_Distance,Box,InterpContour,InterpContour);
-%[INITIAL_POSITIONS,TRIANGULATION]=distmesh2d_plot(Activate_Plot,0.01,@dpoly,@huniform,Average_Nodal_Distance,Box,InterpContour,InterpContour);
-close
+%xc=mean(Contour(:,1));
+%yc=mean(Contour(:,2));
+%xc=0;yc=0.02;
+%
+%rmax=max(((Contour(:,1)-xc).^2+(Contour(:,2)-yc).^2).^0.5);
+%pmin=0;
+%pmax=rmax;
+%fmin=Average_Nodal_Distance*Mesh_Ratio(1);
+%fmax=Average_Nodal_Distance*Mesh_Ratio(2);
+%a=(fmax-fmin)/rmax;
+%b=fmin;
+%fh=@(p) b+a*((p(:,1)-xc).^2+(p(:,2)-yc).^2).^0.5;
+%fh=@(p) fmax-(fmin-fmax)/rmax*dpoly(p,Contour);
+fh=@(p) Average_Nodal_Distance*(1-Mesh_Ratio(1)*dpoly(p,Contour)/Average_Nodal_Distance);
+
+[INITIAL_POSITIONS,TRIANGULATION]=distmesh2d_plot(Activate_Plot,0.0001,@dpoly,fh,Average_Nodal_Distance,Box,Contour,Contour);
+%[INITIAL_POSITIONS,TRIANGULATION]=distmesh2d_plot(Activate_Plot,0.001,@dpoly,@huniform,Average_Nodal_Distance,Box,Contour,Contour);
+%close
 
 Flag_Correct=0;
 for i=2:size(INITIAL_POSITIONS,1)
@@ -111,6 +138,7 @@ for i=2:size(Segments,1)
         Toremove=cat(1,Toremove,[i-1;i]);
     end
 end
+
 Unsorted=zeros(size(Segments,1)-size(Toremove,1),2);
 nb=1;
 ntr=1;
@@ -129,6 +157,7 @@ for i=1:size(Segments,1)
     end
 end
 BORDERS=zeros(size(Unsorted,1),2);
+
 BORDERS(1,:)=Unsorted(1,:);
 for i=2:size(BORDERS,1)
     for j=2:size(Unsorted,1)
@@ -138,6 +167,7 @@ for i=2:size(BORDERS,1)
         end
     end
 end
+
 for i=1:size(BORDERS,1)
     Nbound=i;
     Nnode=BORDERS(i,1);

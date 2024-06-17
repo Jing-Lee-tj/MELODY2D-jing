@@ -152,7 +152,7 @@ void Apply_Damped_Mohr_Coulomb(double kn, double kt, double fric, double coh, do
     if (gapn<0.)
     {
         Pn = -damp * vgapn * 2. * sqrt(mass * kn / length) ;
-        W += Pn * vgapn ;   // This is per unit time and per unit length : must be multiplied by length and deltat after returned
+        //W += Pn * vgapn ;   // This is per unit time and per unit length : must be multiplied by length and deltat after returned
     }
     Pn -= kn * gapn ;
     if (Pn<-tens)
@@ -172,11 +172,14 @@ void Apply_Damped_Mohr_Coulomb(double kn, double kt, double fric, double coh, do
             else
                 Pt = coh + fric * Pn ;
             gapt = -Pt / kt ;
-            W += Pt * vgapt ;            // This is per unit time and per unit length : must be multiplied by length and deltat after returned
+            //W += Pt * vgapt ;            // This is per unit time and per unit length : must be multiplied by length and deltat after returned
         }
-        else
-            W += Pt_damp * vgapt ;   // This is per unit time and per unit length : must be multiplied by length and deltat after returned
+        //else
+            //W += Pt_damp * vgapt ;   // This is per unit time and per unit length : must be multiplied by length and deltat after returned
     }
+    //
+    W = Pn * vgapn + Pt * vgapt ;
+    //
 }
 
 /*
@@ -247,13 +250,15 @@ void Apply_Two_Slopes_Mohr_Coulomb(double kn, double kt, double fric, double coh
 //** APPLY CZM LINEAR ************************//
 //********************************************//
 
-void Apply_CZM_linear(double kini, double Pnlim, double gapnlim, double Pnres, double NTratio, double gapn, double& gapt, double& Damage, double& Pn, double& Pt)
+void Apply_CZM_linear(double kini, double Pnlim, double gapnlim, double Pnres, double NTratio, double damp, double mass, double length, double gapn, double vgapn, double& gapt, double vgapt, double& Damage, double& Pn, double& Pt)
 {
     if (Damage >= 1.)
     {
         // Bond already broken
-        Pn = -kini * gapn ;
-        Pt = -kini * gapt ;
+        Pn = -kini * gapn - damp * vgapn * 2. * sqrt(mass * kini / length);
+        Pt = -kini * gapt - damp * vgapt * 2. * sqrt(mass * kini / length);
+        // Pn = -kini * gapn;
+        // Pt = -kini * gapt;
         if (Pn<-Pnres)
         {
             Pn = 0. ;
@@ -279,10 +284,24 @@ void Apply_CZM_linear(double kini, double Pnlim, double gapnlim, double Pnres, d
             // Elastic part of the bond
             kmax = (Pnlim * (1. - Damage) + Pnres * Damage) / gapnmax ;
             if (gapn<0.)
-                Pn = -kini * gapn ;
+                // Pn = -kini * gapn ;
+                Pn = -kini * gapn - damp * vgapn * 2. * sqrt(mass * kini / length);
             else
-                Pn = -kmax * gapn ;
-            Pt = -kmax * gapt ;
+            {
+                // Pn = -kmax * gapn ;
+                Pn = -kmax * gapn - damp * vgapn * 2. * sqrt(mass * kmax / length);
+                if (Pn < -(Pnlim*(1-Damage) + Pnres * Damage))
+                    Pn = -(Pnlim*(1-Damage) + Pnres * Damage);
+            }
+
+            Pt = -kmax * gapt - damp * vgapt * 2. * sqrt(mass * kmax / length);
+            if (abs(Pt) > (Pnlim*(1-Damage) + Pnres * Damage)*NTratio)
+            {
+                if (gapt>0.)
+                    Pt = -(Pnlim*(1-Damage) + Pnres * Damage)*NTratio ;
+                else
+                    Pt = (Pnlim*(1-Damage) + Pnres * Damage)*NTratio ;
+            }
         }
         else if (gapn > gapnmax && abs(gapt) < gaptmax)
         {
@@ -290,25 +309,85 @@ void Apply_CZM_linear(double kini, double Pnlim, double gapnlim, double Pnres, d
             gapnmax = gapn ;
             gaptmax = gapnmax * NTratio ;
             Damage = (gapnmax - Pnlim / kini) / (gapnlim - Pnlim / kini) ;
-            kmax = (Pnlim * (1. - Damage) + Pnres * Damage) / gapnmax ;
-            if (gapn<0.)
-                Pn = -kini * gapn ;
+            if (Damage >= 1.)
+            {
+                // Bond already broken
+                Pn = -kini * gapn - damp * vgapn * 2. * sqrt(mass * kini / length);
+                Pt = -kini * gapt - damp * vgapt * 2. * sqrt(mass * kini / length);
+                // Pn = -kini * gapn;
+                // Pt = -kini * gapt;
+                if (Pn < -Pnres)
+                {
+                    Pn = 0.;
+                    Pt = 0.;
+                    gapt = 0.;
+                }
+                else if (abs(Pt) > Pnres * NTratio)
+                {
+                    if (gapt > 0.)
+                        Pt = -Pnres * NTratio;
+                    else
+                        Pt = Pnres * NTratio;
+                    gapt = -Pt / kini;
+                }
+            }
             else
-                Pn = -kmax * gapn ;
-            Pt = -kmax * gapt ;
+            {
+                kmax = (Pnlim * (1. - Damage) + Pnres * Damage) / gapnmax;
+                if (gapn < 0.)
+                    Pn = -kini * gapn;
+                else
+                    Pn = -kmax * gapn;
+                Pt = -kmax * gapt - damp * vgapt * 2. * sqrt(mass * kmax / length);
+                if (abs(Pt) > (Pnlim * (1 - Damage) + Pnres * Damage) * NTratio)
+                {
+                    if (gapt > 0.)
+                        Pt = -(Pnlim * (1 - Damage) + Pnres * Damage) * NTratio;
+                    else
+                        Pt = (Pnlim * (1 - Damage) + Pnres * Damage) * NTratio;
+                }
+            }   
         }
         else if (gapn < gapnmax && abs(gapt) > gaptmax)
         {
             // Damage in the tangential direction only
-            gaptmax = abs(gapt) ;
-            gapnmax = gaptmax / NTratio ;
-            Damage = (gapnmax - Pnlim / kini) / (gapnlim - Pnlim / kini) ;
-            kmax = (Pnlim * (1. - Damage) + Pnres * Damage) / gapnmax ;
-            if (gapn<0.)
-                Pn = -kini * gapn ;
-            else
-                Pn = -kmax * gapn ;
-            Pt = -kmax * gapt ;
+            gaptmax = abs(gapt);
+            gapnmax = gaptmax / NTratio;
+            Damage = (gapnmax - Pnlim / kini) / (gapnlim - Pnlim / kini);
+            if (Damage >= 1.)
+            {
+                // Bond already broken
+                Pn = -kini * gapn - damp * vgapn * 2. * sqrt(mass * kini / length);
+                Pt = -kini * gapt - damp * vgapt * 2. * sqrt(mass * kini / length);
+                // Pn = -kini * gapn;
+                // Pt = -kini * gapt;
+                if (Pn < -Pnres)
+                {
+                    Pn = 0.;
+                    Pt = 0.;
+                    gapt = 0.;
+                }
+                else if (abs(Pt) > Pnres * NTratio)
+                {
+                    if (gapt > 0.)
+                        Pt = -Pnres * NTratio;
+                    else
+                        Pt = Pnres * NTratio;
+                    gapt = -Pt / kini;
+                }
+            }
+            else {
+                kmax = (Pnlim * (1. - Damage) + Pnres * Damage) / gapnmax;
+                if (gapn < 0.)
+                    Pn = -kini * gapn - damp * vgapn * 2. * sqrt(mass * kini / length);
+                else
+                {
+                    Pn = -kmax * gapn - damp * vgapn * 2. * sqrt(mass * kmax / length);
+                    if (Pn < -(Pnlim * (1 - Damage) + Pnres * Damage))
+                        Pn = -(Pnlim * (1 - Damage) + Pnres * Damage);
+                }
+                Pt = -kmax * gapt;
+            }
         }
         else if (gapn > gapnmax && abs(gapt) > gaptmax)
         {
@@ -324,12 +403,37 @@ void Apply_CZM_linear(double kini, double Pnlim, double gapnlim, double Pnres, d
                 gapnmax = gaptmax / NTratio ;
             }
             Damage = (gapnmax - Pnlim / kini) / (gapnlim - Pnlim / kini) ;
-            kmax = (Pnlim * (1. - Damage) + Pnres * Damage) / gapnmax ;
-            if (gapn<0.)
-                Pn = -kini * gapn ;
+            if (Damage >= 1.)
+            {
+                // Bond already broken
+                Pn = -kini * gapn - damp * vgapn * 2. * sqrt(mass * kini / length);
+                Pt = -kini * gapt - damp * vgapt * 2. * sqrt(mass * kini / length);
+                // Pn = -kini * gapn;
+                // Pt = -kini * gapt;
+                if (Pn < -Pnres)
+                {
+                    Pn = 0.;
+                    Pt = 0.;
+                    gapt = 0.;
+                }
+                else if (abs(Pt) > Pnres * NTratio)
+                {
+                    if (gapt > 0.)
+                        Pt = -Pnres * NTratio;
+                    else
+                        Pt = Pnres * NTratio;
+                    gapt = -Pt / kini;
+                }
+            }
             else
-                Pn = -kmax * gapn ;
-            Pt = -kmax * gapt ;
+            {
+                kmax = (Pnlim * (1. - Damage) + Pnres * Damage) / gapnmax;
+                if (gapn < 0.)
+                    Pn = -kini * gapn;
+                else
+                    Pn = -kmax * gapn;
+                Pt = -kmax * gapt;
+            }
         }
     }
 }
@@ -482,7 +586,9 @@ void Apply_Bonded_Mohr_Coulomb(double kn, double kt, double kbond, double fricbo
             Pn = -kn * gapn - damp * vgapn * 2. * sqrt(mass * kn / length) ;
         else
             Pn = -kbond * gapn - damp * vgapn * 2. * sqrt(mass * kbond / length) ;
+        
         Pt = -kt * gapt - damp * vgapt * 2. * sqrt(mass * kt / length) ;
+
         if (Pn<-tensbond)
         {
             Damage = 1. ;

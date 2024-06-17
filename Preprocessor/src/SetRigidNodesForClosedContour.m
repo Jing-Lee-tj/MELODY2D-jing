@@ -23,7 +23,7 @@ InterpContour(1,:)=Contour(1,1:2);
 for i=2:Ninterp
     D=(i-1)*DistInterp;
     for j=1:size(Lengths,1)
-        if D>=Lengths(j,1) & D<=Lengths(j+1,1)
+        if D>=Lengths(j,1) && D<=Lengths(j+1,1)
             ratio=(D-Lengths(j,1))/(Lengths(j+1,1)-Lengths(j,1));
             InterpContour(i,:)=(1-ratio)*Contour(j,1:2)+ratio*Contour(j+1,1:2);
             break
@@ -33,8 +33,8 @@ end
 
 % Position the field nodes and triangulate
 Box=[min(InterpContour(:,1)),min(InterpContour(:,2));max(InterpContour(:,1)),max(InterpContour(:,2))];
-[INITIAL_POSITIONS,TRIANGULATION]=distmesh2d_plot(Activate_Plot,0.001,@dpoly,@huniform,4*Average_Nodal_Distance,Box,InterpContour,InterpContour);
-close
+[INITIAL_POSITIONS,TRIANGULATION]=distmesh2d_plot(Activate_Plot,0.0001,@dpoly,@huniform,2*Average_Nodal_Distance,Box,InterpContour,InterpContour);
+% close
 
 Flag_Correct=0;
 for i=2:size(INITIAL_POSITIONS,1)
@@ -95,7 +95,7 @@ end
 Segments=sortrows(cat(2,sort(Segments(:,1:2)')',Segments(:,3)),[1,2]);
 Toremove=[];
 for i=2:size(Segments,1)
-    if Segments(i,1)==Segments(i-1,1) & Segments(i,2)==Segments(i-1,2)
+    if Segments(i,1)==Segments(i-1,1) && Segments(i,2)==Segments(i-1,2)
         Toremove=cat(1,Toremove,[i-1;i]);
     end
 end

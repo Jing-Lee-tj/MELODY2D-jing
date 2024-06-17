@@ -6,7 +6,9 @@
 #include <cmath>
 #include <algorithm>
 #include <omp.h>
+#include <filesystem>
 using namespace std ;
+namespace fs = std::filesystem;
 #include "Tools.h"
 #include "Material.h"
 #include "Contact_Law.h"
@@ -22,16 +24,18 @@ using namespace std ;
 #include "Graphic.h"
 #include "Monitoring.h"
 
-main(int argc, char **argv)
+
+int main(int argc, char **argv)
 {
+
     cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << endl ;
     cout << "%%                                                       %%" << endl ;
-    cout << "%%                       MELODY 2D                       %%" << endl ;
+    cout << "%%                MELODY 2D modified jing                %%" << endl ;
     cout << "%%            Multibody ELement-free Open code           %%" << endl ;
     cout << "%%              for DYnamic simulation in 2D             %%" << endl ;
     cout << "%%                                                       %%" << endl ;
     cout << "%%                     Main Program                      %%" << endl ;
-    cout << "%%        Version 3.91 ; 28th of January 2020            %%" << endl ;
+    cout << "%%        Version 3.92 ; 27th of February 2020           %%" << endl ;
     cout << "%%                                                       %%" << endl ;
     cout << "%%                Author: Guilhem Mollon                 %%" << endl ;
     cout << "%%                                                       %%" << endl ;
@@ -58,8 +62,8 @@ main(int argc, char **argv)
     int Number_save(0), Number_print, Number_iteration ;
     double Xmin_period, Xmax_period, Penalty ;
     double Xgravity, Ygravity ;
-    int Activate_plot ;
-    double Xmin_plot, Xmax_plot, Ymin_plot, Ymax_plot ;
+    double Chains_typical_pressure, Chains_size_ratio ;
+    double Fields_xmin, Fields_xmax, Fields_ymin, Fields_ymax, Fields_step, Fields_dist ;
     int Nb_bodies ;
     vector<Body> Bodies ;
     int Nb_monitored ;
@@ -74,9 +78,9 @@ main(int argc, char **argv)
     double total_mass, max_mass ;
     int Nb_regions = 0 ;
     vector<vector<int>> Regions ;
-    vector<int> flags(11) ;
+    vector<int> flags(13) ;
     int flag_failure = 0 ;
-    vector<int> To_Plot(41) ;
+    vector<int> To_Plot(44) ;
     vector<vector<int>> Contacts_Table ;
 
     // LOAD STATIC DATA //
@@ -87,11 +91,12 @@ main(int argc, char **argv)
                  Max_mass_scaling, Control_parameter_mass_scaling, Error_factor_mass_scaling, Decrease_factor_mass_scaling,
                  Save_period, Print_period, Contact_update_period,
                  Xmin_period, Xmax_period, Penalty, Xgravity, Ygravity,
-                 Activate_plot,	Xmin_plot,	Xmax_plot,	Ymin_plot,	Ymax_plot,
+                 Chains_typical_pressure, Chains_size_ratio,
+                 Fields_xmin, Fields_xmax, Fields_ymin, Fields_ymax, Fields_step, Fields_dist,
                  Nb_monitored, Monitored, Nb_deactivated, Deactivated, Nb_spies, Spies,
                  Nb_regions, Regions, Nb_bodies, Bodies, To_Plot ) ;
-
-    Number_save = atoi(argv[1]) ;
+    if  (argc > 1)
+        Number_save = atoi(argv[1]);
 
     // LOAD DYNAMIC DATA //
     Load_dynamic( Number_save, Number_print,
@@ -101,30 +106,32 @@ main(int argc, char **argv)
                   Bodies, flags ) ;
 
     // INITIALIZATION //
+    if (flags[12]==1)
+        for (int i=0 ; i<Nb_bodies ; i++)
+            Bodies[i].Update_initial_position();
     if (flags[7]==0)
         cout << "Initializing" << endl ;
     for (int i=0 ; i<Nb_bodies ; i++)
         Bodies[i].Update_borders(Xmin_period, Xmax_period) ;
 
-    for (int i=0 ; i<Nb_bodies ; i++)
-        Bodies[i].Update_bc(Time) ;
+    //for (int i=0 ; i<Nb_bodies ; i++)
+    //    Bodies[i].Update_bc(Time) ;
 
     Update_proximity(Nb_bodies, Bodies, Xmin_period, Xmax_period, flags) ;
     if (flags[3]==1)
         Initialize_CZM( Nb_bodies, Bodies, Nb_contact_laws, Contact_laws, flags, Xmin_period, Xmax_period ) ;
-    cout << "Updating Material Properties" << endl ;
+    if (flags[11]==1)
+        for (int i=0 ; i<Nb_bodies ; i++)
+            Bodies[i].Update_initial_damage() ;
 
+
+    cout << "Updating Material Properties" << endl ;
     #pragma omp parallel
     {
         #pragma omp for schedule(dynamic)
         for (int i=0 ; i<Nb_bodies ; i++)
             Bodies[i].Update_material( Nb_materials, Materials, flags ) ;
     }
-    Update_proximity(Nb_bodies, Bodies, Xmin_period, Xmax_period, flags) ;
-    if (flags[3]==1)
-        Initialize_CZM( Nb_bodies, Bodies, Nb_contact_laws, Contact_laws, flags, Xmin_period, Xmax_period ) ;
-    cout << "Updating Material Properties" << endl ;
-
 
     for (int i=0 ; i<Nb_spies ; i++)
         Spies[i].next_time += Time ;
@@ -132,7 +139,12 @@ main(int argc, char **argv)
 
     // PRINT INITIAL STATE //
     if ( Number_save == 0 )
-        Write_graphic(Nb_bodies, Bodies, Number_iteration, Number_save, Number_print, Time, Xmin_period, Xmax_period, Nb_materials, Materials, To_Plot) ;
+    {
+        Write_grains(Nb_bodies, Bodies, Number_iteration, Number_save, Number_print, Time, Xmin_period, Xmax_period, Nb_materials, Materials, To_Plot) ;
+        Write_chains(Nb_bodies, Bodies, Number_iteration, Number_save, Number_print, Time, Xmin_period, Xmax_period, Chains_typical_pressure, Chains_size_ratio) ;
+        Write_contours(Nb_bodies, Bodies, Number_iteration, Number_save, Number_print, Time, Xmin_period, Xmax_period) ;
+        Write_fields(Nb_bodies, Bodies, Number_iteration, Number_save, Number_print, Time, Xmin_period, Xmax_period, Fields_xmin, Fields_xmax, Fields_ymin, Fields_ymax, Fields_step, Fields_dist) ;
+    }
 
     // MAIN PROGRAM //
     if (flags[7]==0)
@@ -203,7 +215,10 @@ main(int argc, char **argv)
         {
             Number_print = Number_print + 1 ;                                           // SEQUENTIAL //
             Next_print = Next_print + Print_period ;                                    // SEQUENTIAL //
-            Write_graphic(Nb_bodies, Bodies, Number_iteration, Number_save, Number_print, Time, Xmin_period, Xmax_period, Nb_materials, Materials, To_Plot) ;
+            Write_grains(Nb_bodies, Bodies, Number_iteration, Number_save, Number_print, Time, Xmin_period, Xmax_period, Nb_materials, Materials, To_Plot) ;
+            Write_chains(Nb_bodies, Bodies, Number_iteration, Number_save, Number_print, Time, Xmin_period, Xmax_period, Chains_typical_pressure, Chains_size_ratio) ;
+            Write_contours(Nb_bodies, Bodies, Number_iteration, Number_save, Number_print, Time, Xmin_period, Xmax_period) ;
+            Write_fields(Nb_bodies, Bodies, Number_iteration, Number_save, Number_print, Time, Xmin_period, Xmax_period, Fields_xmin, Fields_xmax, Fields_ymin, Fields_ymax, Fields_step, Fields_dist) ;
         }
         //cout << "47" << endl ;
 
@@ -234,6 +249,9 @@ main(int argc, char **argv)
         }
         //cout << "49" << endl ;
         if (flag_failure == 1)
+        {
+            cout << "Program computation failure";
             break ;
+        }
     }
 }

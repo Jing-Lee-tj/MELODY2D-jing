@@ -108,6 +108,7 @@ public :
     double max_error ;
     int node_for_max_error ;
     double damage ;
+    double initial_damage ;
     vector<double> drivendof ;
     double internal_work ;
     double contact_work ;
@@ -143,6 +144,8 @@ public :
     double density ;
     vector<vector<double>> contact_forces_to_send ;
     vector<vector<int>> contact_forces_to_send_to ;
+    int nb_contacting_bodies ;
+    int nb_active_contacts ;
 
     // Mass scaling attributes
     double delta_factor_mass_scaling ;
@@ -173,7 +176,7 @@ public :
     void Update_alid_forces(double time) ;
     void Update_damping_forces() ;
     void Initialize_contact_forces() ;
-    void Update_contacts(vector<Body>& b, double xmin, double xmax) ;
+    void Update_contacts(vector<Body>& b, double Deltat, double xmin, double xmax) ;
     void Update_contact_forces(double dt, vector<Body>& b, int Nb_contact_laws, vector<Contact_law>& Contact_laws, vector<vector<int>>& Contacts_Table, double xmin, double xmax) ;
     void Send_contact_forces(vector<Body>& b) ;
     void Sum_up_forces() ;
@@ -190,6 +193,8 @@ public :
     void Restore() ;
     void Update_damage() ;
     void Update_material(int Nb_materials, vector<Material>& Materials, vector<int> flags) ;
+    void Update_initial_damage() ;
+    void Update_initial_position();
 } ;
 
 
@@ -277,6 +282,7 @@ Body::Body (int i, string m, string p, string t)
     max_error = 0. ;
     node_for_max_error = 0 ;
     damage = 0. ;
+    initial_damage = 0. ;
     internal_work = 0. ;
     contact_work = 0. ;
     body_work = 0. ;
@@ -1338,7 +1344,7 @@ void Body::Initialize_contact_forces()
 //** UPDATE CONTACTS *************************//
 //********************************************//
 
-void Body::Update_contacts(vector<Body>& Bodies, double xmin, double xmax)
+void Body::Update_contacts(vector<Body>& Bodies, double Deltat, double xmin, double xmax)
 {
     double period = xmax - xmin ;
     vector<int> border_nodesS ;
@@ -1607,6 +1613,16 @@ void Body::Update_contacts(vector<Body>& Bodies, double xmin, double xmax)
                                             shapeM1 * Bodies[bodyM].nodes[nodeM1].y_velocity +
                                             shapeM2 * Bodies[bodyM].nodes[nodeM2].y_velocity +
                                             shapeM3 * Bodies[bodyM].nodes[nodeM3].y_velocity ) ;
+        //vgapx = nodes[nodeS].x_velocity + 0.5 * Deltat * nodes[nodeS].x_acceleration -
+        //      ( shapeM0 * (Bodies[bodyM].nodes[nodeM0].x_velocity + 0.5 * Deltat * Bodies[bodyM].nodes[nodeM0].x_acceleration) +
+        //        shapeM1 * (Bodies[bodyM].nodes[nodeM1].x_velocity + 0.5 * Deltat * Bodies[bodyM].nodes[nodeM1].x_acceleration) +
+        //        shapeM2 * (Bodies[bodyM].nodes[nodeM2].x_velocity + 0.5 * Deltat * Bodies[bodyM].nodes[nodeM2].x_acceleration) +
+        //        shapeM3 * (Bodies[bodyM].nodes[nodeM3].x_velocity + 0.5 * Deltat * Bodies[bodyM].nodes[nodeM3].x_acceleration) ) ;
+        //vgapy = nodes[nodeS].y_velocity + 0.5 * Deltat * nodes[nodeS].y_acceleration -
+        //      ( shapeM0 * (Bodies[bodyM].nodes[nodeM0].y_velocity + 0.5 * Deltat * Bodies[bodyM].nodes[nodeM0].y_acceleration) +
+        //        shapeM1 * (Bodies[bodyM].nodes[nodeM1].y_velocity + 0.5 * Deltat * Bodies[bodyM].nodes[nodeM1].y_acceleration) +
+        //        shapeM2 * (Bodies[bodyM].nodes[nodeM2].y_velocity + 0.5 * Deltat * Bodies[bodyM].nodes[nodeM2].y_acceleration) +
+        //        shapeM3 * (Bodies[bodyM].nodes[nodeM3].y_velocity + 0.5 * Deltat * Bodies[bodyM].nodes[nodeM3].y_acceleration) ) ;
         vgapn = vgapx * xnorm + vgapy * ynorm ;
         vgapt = vgapx * xtan + vgapy * ytan ;
         contact_elements[icontact].gapn = gapn ;
@@ -1754,20 +1770,24 @@ void Body::Update_contact_forces( double Deltat, vector<Body>& Bodies, int Nb_co
             double cohfree = parameters[7] ;
             double tensfree = parameters[8] ;
             double damp = parameters[9] ;
+            double Damage;
             int nb_internal = contact_elements[icontact].nb_internal ;
-            double Damage = contact_elements[icontact].internal[0] ;
-            Pn = contact_elements[icontact].internal[1] ;
-            Pt = contact_elements[icontact].internal[2] ;
+            
+
             if (nb_internal==0) // NB this would mean that the contact was just created and should be initialized to the state "broken bond"
             {
                 Damage = 1. ;
                 contact_elements[icontact].nb_internal = 3 ;
                 contact_elements[icontact].internal = {1., 0., 0.} ;
             }
+            Damage = contact_elements[icontact].internal[0];
+            Pn = contact_elements[icontact].internal[1];
+            Pt = contact_elements[icontact].internal[2];
             Apply_Bonded_Mohr_Coulomb(kn, kt, kbond, fricbond, cohbond*0.5, tensbond*0.5, fricfree, cohfree*0.5, tensfree*0.5, damp, effective_mass, initial_length, gapn, vgapn, gapt, vgapt, Damage, Pn, Pt) ;
             contact_elements[icontact].internal[0] = Damage ;
             contact_elements[icontact].internal[1] = Pn ;
             contact_elements[icontact].internal[2] = Pt ;
+
         }
         else if (contact_law_type == "CZMlinear")
         {
@@ -1776,16 +1796,22 @@ void Body::Update_contact_forces( double Deltat, vector<Body>& Bodies, int Nb_co
             double gapnlim = parameters[2] ;
             double Pnres = parameters[3] ;
             double NTratio = parameters[4] ;
+            double damp = parameters[5] ;
+            double Damage;
             int nb_internal = contact_elements[icontact].nb_internal ;
-            double Damage = contact_elements[icontact].internal[0] ;
             if (nb_internal==0) // NB: this would mean that the contact was just created and should be initialized to the state "broken bond"
             {
                 Damage = 1. ;
-                contact_elements[icontact].nb_internal = 1 ;
-                contact_elements[icontact].internal = {1.} ;
+                contact_elements[icontact].nb_internal = 3 ;
+                contact_elements[icontact].internal = {1., 0., 0.} ;
             }
-            Apply_CZM_linear(kini, Pnlim*0.5, gapnlim, Pnres*0.5, NTratio, gapn, gapt, Damage, Pn, Pt) ;
+            Damage = contact_elements[icontact].internal[0];
+            Pn = contact_elements[icontact].internal[1];
+            Pt = contact_elements[icontact].internal[2];
+            Apply_CZM_linear(kini, Pnlim*0.5, gapnlim, Pnres*0.5, NTratio, damp, mass, length, gapn, vgapn, gapt, vgapt, Damage, Pn, Pt) ;
             contact_elements[icontact].internal[0] = Damage ;
+            contact_elements[icontact].internal[1] = Pn ;
+            contact_elements[icontact].internal[2] = Pt ;
         }
         else if (contact_law_type == "CZMfatigue")
         {
@@ -1798,6 +1824,7 @@ void Body::Update_contact_forces( double Deltat, vector<Body>& Bodies, int Nb_co
             double Raten = parameters[6] ;
             double Ratet = parameters[7] ;
             int nb_internal = contact_elements[icontact].nb_internal ;
+
             double Damage = contact_elements[icontact].internal[0] ;
             Pn = contact_elements[icontact].internal[1] ;
             Pt = contact_elements[icontact].internal[2] ;
@@ -1816,16 +1843,9 @@ void Body::Update_contact_forces( double Deltat, vector<Body>& Bodies, int Nb_co
         }
         // OTHER CONTACT LAWS ??
 
-        nodeM0 = contact_elements[icontact].nodeM0 ;
-        shapeM0 = contact_elements[icontact].shapeM0 ;
-        nodeM1 = contact_elements[icontact].nodeM1 ;
-        shapeM1 = contact_elements[icontact].shapeM1 ;
-        nodeM2 = contact_elements[icontact].nodeM2 ;
-        shapeM2 = contact_elements[icontact].shapeM2 ;
-        nodeM3 = contact_elements[icontact].nodeM3 ;
-        shapeM3 = contact_elements[icontact].shapeM3 ;
         Px = xnorm * Pn + xtan * Pt ;
         Py = ynorm * Pn + ytan * Pt ;
+
         if (length_evolution == "Fixed")
         {
             Fsx = Px * initial_length ;
@@ -1845,7 +1865,7 @@ void Body::Update_contact_forces( double Deltat, vector<Body>& Bodies, int Nb_co
         contact_elements[icontact].fy = Fsy ;
 
         contact_work += 0.5 * W ;
-        Bodies[bodyM].contact_work += 0.5 * W ; // Possible writing conflict !
+        //Bodies[bodyM].contact_work += 0.5 * W ; // Possible writing conflict !
 
 
         //if (gapn>1.e-6 & abs(Pn)>0.) cout << index << ' ' << contact_elements[icontact].borderS << ' ' << contact_elements[icontact].border_nodeS << ' ' << contact_elements[icontact].bodyM << ' ' << gapn << ' ' << gapt << ' ' << Pn << ' ' << Pt << ' ' << Px << ' ' << Py << endl ;
@@ -1885,6 +1905,15 @@ void Body::Update_contact_forces( double Deltat, vector<Body>& Bodies, int Nb_co
 
         if (Bodies[bodyM].type=="deformable")
         {
+            nodeM0 = contact_elements[icontact].nodeM0 ;
+            shapeM0 = contact_elements[icontact].shapeM0 ;
+            nodeM1 = contact_elements[icontact].nodeM1 ;
+            shapeM1 = contact_elements[icontact].shapeM1 ;
+            nodeM2 = contact_elements[icontact].nodeM2 ;
+            shapeM2 = contact_elements[icontact].shapeM2 ;
+            nodeM3 = contact_elements[icontact].nodeM3 ;
+            shapeM3 = contact_elements[icontact].shapeM3 ;
+
             number_influencing_nodes = Bodies[bodyM].nodes[nodeM0].number_influencing_nodes ;
             influencing_nodes = Bodies[bodyM].nodes[nodeM0].influencing_nodes ;
             shape_functions = Bodies[bodyM].nodes[nodeM0].shape_functions ;
@@ -1892,7 +1921,7 @@ void Body::Update_contact_forces( double Deltat, vector<Body>& Bodies, int Nb_co
             {
                 //Bodies[bodyM].nodes[influencing_nodes[j]].x_master_contact_forces[neig] -= Fsx * shapeM0 * shape_functions[j] ;
                 //Bodies[bodyM].nodes[influencing_nodes[j]].y_master_contact_forces[neig] -= Fsy * shapeM0 * shape_functions[j] ;
-                contact_forces_to_send.push_back({ -Fsx * shapeM0 * shape_functions[j], -Fsy * shapeM0 * shape_functions[j] }) ;
+                contact_forces_to_send.push_back({ -Fsx * shapeM0 * shape_functions[j], -Fsy * shapeM0 * shape_functions[j], 0., 0. }) ;
                 contact_forces_to_send_to.push_back({ bodyM, influencing_nodes[j] }) ;
             }
             number_influencing_nodes = Bodies[bodyM].nodes[nodeM1].number_influencing_nodes ;
@@ -1902,7 +1931,7 @@ void Body::Update_contact_forces( double Deltat, vector<Body>& Bodies, int Nb_co
             {
                 //Bodies[bodyM].nodes[influencing_nodes[j]].x_master_contact_forces[neig] -= Fsx * shapeM1 * shape_functions[j] ;
                 //Bodies[bodyM].nodes[influencing_nodes[j]].y_master_contact_forces[neig] -= Fsy * shapeM1 * shape_functions[j] ;
-                contact_forces_to_send.push_back({ -Fsx * shapeM1 * shape_functions[j], -Fsy * shapeM1 * shape_functions[j] }) ;
+                contact_forces_to_send.push_back({ -Fsx * shapeM1 * shape_functions[j], -Fsy * shapeM1 * shape_functions[j], 0., 0.5 * W }) ;
                 contact_forces_to_send_to.push_back({ bodyM, influencing_nodes[j] }) ;
             }
             number_influencing_nodes = Bodies[bodyM].nodes[nodeM2].number_influencing_nodes ;
@@ -1912,7 +1941,7 @@ void Body::Update_contact_forces( double Deltat, vector<Body>& Bodies, int Nb_co
             {
                 //Bodies[bodyM].nodes[influencing_nodes[j]].x_master_contact_forces[neig] -= Fsx * shapeM2 * shape_functions[j] ;
                 //Bodies[bodyM].nodes[influencing_nodes[j]].y_master_contact_forces[neig] -= Fsy * shapeM2 * shape_functions[j] ;
-                contact_forces_to_send.push_back({ -Fsx * shapeM2 * shape_functions[j], -Fsy * shapeM2 * shape_functions[j] }) ;
+                contact_forces_to_send.push_back({ -Fsx * shapeM2 * shape_functions[j], -Fsy * shapeM2 * shape_functions[j], 0., 0. }) ;
                 contact_forces_to_send_to.push_back({ bodyM, influencing_nodes[j] }) ;
             }
             number_influencing_nodes = Bodies[bodyM].nodes[nodeM3].number_influencing_nodes ;
@@ -1922,7 +1951,7 @@ void Body::Update_contact_forces( double Deltat, vector<Body>& Bodies, int Nb_co
             {
                 //Bodies[bodyM].nodes[influencing_nodes[j]].x_master_contact_forces[neig] -= Fsx * shapeM3 * shape_functions[j] ;
                 //Bodies[bodyM].nodes[influencing_nodes[j]].y_master_contact_forces[neig] -= Fsy * shapeM3 * shape_functions[j] ;
-                contact_forces_to_send.push_back({ -Fsx * shapeM3 * shape_functions[j], -Fsy * shapeM3 * shape_functions[j] }) ;
+                contact_forces_to_send.push_back({ -Fsx * shapeM3 * shape_functions[j], -Fsy * shapeM3 * shape_functions[j], 0., 0. }) ;
                 contact_forces_to_send_to.push_back({ bodyM, influencing_nodes[j] }) ;
             }
         }
@@ -1930,7 +1959,7 @@ void Body::Update_contact_forces( double Deltat, vector<Body>& Bodies, int Nb_co
         {
             dx = nodes[nodeS].x_current - Bodies[bodyM].x_current - shiftM * period ;
             dy = nodes[nodeS].y_current - Bodies[bodyM].y_current ;
-            contact_forces_to_send.push_back({ -Fsx, -Fsy, Fsx * dy - Fsy * dx }) ;
+            contact_forces_to_send.push_back({ -Fsx, -Fsy, Fsx * dy - Fsy * dx, 0.5 * W }) ;
             contact_forces_to_send_to.push_back({ bodyM, -1 }) ;
             //Bodies[bodyM].x_master_contact_forces[neig] -= Fsx ;
             //Bodies[bodyM].y_master_contact_forces[neig] -= Fsy ;
@@ -1963,6 +1992,7 @@ void Body::Send_contact_forces(vector<Body>& Bodies)
             Bodies[b].nodes[n].x_contact_force += contact_forces_to_send[j][0] ;
             Bodies[b].nodes[n].y_contact_force += contact_forces_to_send[j][1] ;
         }
+        Bodies[b].contact_work += contact_forces_to_send[j][3] ;
     }
 }
 
@@ -2035,11 +2065,11 @@ void Body::Apply_Newton()
         y_acceleration = y_force * inverse_mass / factor_mass_scaling ;
         r_acceleration = r_force * inverse_inertia / factor_mass_scaling ;
     }
-    for (int i(0) ; i<nb_nodes ; i++)
-    {
-        nodes[i].x_acceleration = x_acceleration ;
-        nodes[i].y_acceleration = y_acceleration ;
-    }
+    //for (int i(0) ; i<nb_nodes ; i++)
+    //{
+    //    nodes[i].x_acceleration = x_acceleration ;
+    //    nodes[i].y_acceleration = y_acceleration ;
+    //}
 }
 
 
@@ -2055,10 +2085,12 @@ void Body::Apply_Euler(double Deltat)
         double vx, vy ;
         for (int i(0) ; i<nb_nodes ; i++)
         {
-            vx = nodes[i].x_velocity_parameter + 0.5 * Deltat * nodes[i].x_acceleration_parameter ;
-            vy = nodes[i].y_velocity_parameter + 0.5 * Deltat * nodes[i].y_acceleration_parameter ;
+            vx = nodes[i].x_velocity_parameter ;// + 0.5 * Deltat * nodes[i].x_acceleration_parameter ;
+            vy = nodes[i].y_velocity_parameter ;// + 0.5 * Deltat * nodes[i].y_acceleration_parameter ;
             internal_work += Deltat * ( vx * nodes[i].x_internal_force + vy * nodes[i].y_internal_force );
+            //
             //contact_work += Deltat * ( vx * nodes[i].x_contact_force + vy * nodes[i].y_contact_force ) ;
+            //
             body_work += Deltat * ( vx * nodes[i].x_body_force + vy * nodes[i].y_body_force ) ;
             dirichlet_work += Deltat * ( vx * nodes[i].x_dirichlet_force + vy * nodes[i].y_dirichlet_force ) ;
             neumann_work += Deltat * ( vx * nodes[i].x_neumann_force + vy * nodes[i].y_neumann_force ) ;
@@ -2074,7 +2106,9 @@ void Body::Apply_Euler(double Deltat)
         vx = x_velocity + 0.5 * Deltat * x_acceleration ;
         vy = y_velocity + 0.5 * Deltat * y_acceleration ;
         vr = r_velocity + 0.5 * Deltat * r_acceleration ;
+        //
         //contact_work += Deltat * ( vx * x_contact_force + vy * y_contact_force + vr * r_contact_force ) ;
+        //
         body_work += Deltat * ( vx * x_body_force + vy * y_body_force + vr * r_body_force ) ;
         dirichlet_work += Deltat * ( vx * x_dirichlet_force + vy * y_dirichlet_force + vr * r_dirichlet_force ) ;
         neumann_work += Deltat * ( vx * x_neumann_force + vy * y_neumann_force + vr * r_neumann_force ) ;
@@ -2083,7 +2117,7 @@ void Body::Apply_Euler(double Deltat)
         if (drivendof[0] == 0.)
         {
             x_velocity += Deltat * x_acceleration ;
-            x_displacement = x_displacement + Deltat * x_velocity ;
+            x_displacement += Deltat * x_velocity ;
         }
         else if (drivendof[0] == 1.)
         {
@@ -2095,7 +2129,7 @@ void Body::Apply_Euler(double Deltat)
         if (drivendof[4] == 0.)
         {
             y_velocity += Deltat * y_acceleration ;
-            y_displacement = y_displacement + Deltat * y_velocity ;
+            y_displacement += Deltat * y_velocity ;
         }
         else if (drivendof[4] == 1.)
         {
@@ -2220,8 +2254,6 @@ void Body::Update_kinematics()
             dr = r_displacement - r_initial ;
             nodes[i].x_displacement = x_displacement + dx * cos( dr ) - dy * sin( dr ) - dx ;
             nodes[i].y_displacement = y_displacement + dx * sin( dr ) + dy * cos( dr ) - dy ;
-            nodes[i].x_velocity = x_velocity ;
-            nodes[i].y_velocity = y_velocity ;
         }
     }
 }
@@ -2291,12 +2323,12 @@ void Body::Update_current_positions()
             dr = r_displacement - r_initial ;
             nodes[i].x_current = x_current + dx * cos( dr ) - dy * sin( dr ) ;
             nodes[i].y_current = y_current + dx * sin( dr ) + dy * cos( dr ) ;
-            //nodes[i].x_displacement = nodes[i].x_current - nodes[i].x_initial ;
-            //nodes[i].y_displacement = nodes[i].y_current - nodes[i].y_initial ;
             dx = nodes[i].x_current - x_current ;
             dy = nodes[i].y_current - y_current ;
             nodes[i].x_velocity = -dy * r_velocity + x_velocity ;
             nodes[i].y_velocity = dx * r_velocity + y_velocity ;
+            nodes[i].x_acceleration = -dy * r_acceleration + x_acceleration ;
+            nodes[i].y_acceleration = dx * r_acceleration + y_acceleration ;
         }
     }
 }
@@ -2905,4 +2937,48 @@ void Body::Update_material( int Nb_materials, vector<Material>& Materials, vecto
     }
 }
 
+
+
+//********************************************//
+//** UPDATE INITIAL DAMAGE *******************//
+//********************************************//
+
+void Body::Update_initial_damage()
+{
+    initial_damage = damage ;
+}
 #endif
+
+void Body::Update_initial_position()
+{
+    //To check in futureD
+    if (type=="deformable"){
+        //to do
+    }
+    else if (type=="rigid")
+    {
+        //update the current position
+        for (int i(0) ; i<nb_nodes ; i++)
+        {
+            nodes[i].x_initial = nodes[i].x_current;
+            nodes[i].y_initial = nodes[i].y_current;
+            nodes[i].x_displacement = 0;
+            nodes[i].y_displacement = 0;
+        }
+        x_initial = x_current;
+        y_initial = y_current;
+        r_initial = 0; //note r_initial should be reset to zero
+        x_displacement = 0;
+        y_displacement = 0;
+        r_displacement = 0;
+
+        //clear the cumulative work
+        internal_work = 0. ;
+        contact_work = 0. ;
+        body_work = 0. ;
+        dirichlet_work = 0. ;
+        neumann_work = 0. ;
+        damping_work = 0. ;
+        alid_work = 0. ;
+    }
+}

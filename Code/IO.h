@@ -1,7 +1,8 @@
 #ifndef DEF_IO
 #define DEF_IO
 #include <sstream>
-
+using namespace std;
+namespace fs = std::filesystem;
 
 
 //********************************************//
@@ -37,28 +38,13 @@ void Read_spy_line(
             Static_Control_file >> b >> n ;
             New_Read = { 0, 2, b, n } ;
         }
-        else if (Keyword == "Length")
-        {
-            Static_Control_file >> b ;
-            New_Read = { 0, 3, b } ;
-        }
-        else if (Keyword == "LengthInContact")
-        {
-            Static_Control_file >> b ;
-            New_Read = { 0, 4, b } ;
-        }
-        else if (Keyword == "Area")
-        {
-            Static_Control_file >> b ;
-            New_Read = { 0, 5, b } ;
-        }
         else if (Keyword == "AllX")
         {
-            New_Read = { 0, 6 } ;
+            New_Read = { 0, 3 } ;
         }
         else if (Keyword == "AllY")
         {
-            New_Read = { 0, 7 } ;
+            New_Read = { 0, 4 } ;
         }
     }
     else if (Keyword == "Displacement")
@@ -453,8 +439,19 @@ void Read_spy_line(
     }
     else if (Keyword == "Damage")
     {
-        Static_Control_file >> b ;
-        New_Read = { 8, b } ;
+        Static_Control_file >> Keyword >> b ;
+        if (Keyword == "Initial")
+        {
+            New_Read = { 8, 0, b } ;
+        }
+        else if (Keyword == "Current")
+        {
+            New_Read = { 8, 1, b } ;
+        }
+        else if (Keyword == "Relative")
+        {
+            New_Read = { 8, 2, b } ;
+        }
     }
     else if (Keyword == "Energy")
     {
@@ -577,14 +574,69 @@ void Read_spy_line(
             Static_Control_file >> b >> n ;
             New_Read = { 12, 8, b, n } ;
         }
-
-        else if (Keyword == "Polar")
+    }
+    else if (Keyword == "Polar")
+    {
+        Static_Control_file >> Keyword >> n >> xmin >> xmax >> ymin >> ymax ;
+        if (Keyword == "Contact_Normal")
         {
-            Static_Control_file >> Keyword >> n >> xmin >> xmax >> ymin >> ymax ;
-            if (Keyword == "Contact_Normal")
-            {
-                New_Read = { 11, 0, n, xmin, xmax, ymin, ymax } ;
-            }
+            New_Read = { 13, 0, n, xmin, xmax, ymin, ymax } ;
+        }
+        if (Keyword == "Force_Direction")
+        {
+            New_Read = { 13, 1, n, xmin, xmax, ymin, ymax } ;
+        }
+        if (Keyword == "Compressive_Contact_Normal")
+        {
+            New_Read = { 13, 2, n, xmin, xmax, ymin, ymax } ;
+        }
+        if (Keyword == "Compressive_Force_Direction")
+        {
+            New_Read = { 13, 3, n, xmin, xmax, ymin, ymax } ;
+        }
+        if (Keyword == "Tensile_Contact_Normal")
+        {
+            New_Read = { 13, 4, n, xmin, xmax, ymin, ymax } ;
+        }
+        if (Keyword == "Tensile_Force_Direction")
+        {
+            New_Read = { 13, 5, n, xmin, xmax, ymin, ymax } ;
+        }
+    }
+    else if (Keyword == "Property")
+    {
+        Static_Control_file >> Keyword >> b ;
+        if (Keyword == "Status")
+        {
+            New_Read = { 14, 0, b } ;
+        }
+        else if (Keyword == "Type")
+        {
+            New_Read = { 14, 1, b } ;
+        }
+        else if (Keyword == "Active_Contacts")
+        {
+            New_Read = { 14, 2, b } ;
+        }
+        else if (Keyword == "Contacting_Bodies")
+        {
+            New_Read = { 14, 3, b } ;
+        }
+        else if (Keyword == "Length")
+        {
+            New_Read = { 14, 4, b } ;
+        }
+        else if (Keyword == "LengthInContact")
+        {
+            New_Read = { 14, 5, b } ;
+        }
+        else if (Keyword == "Area")
+        {
+            New_Read = { 14, 6, b } ;
+        }
+        else if (Keyword == "Temperature")
+        {
+            New_Read = { 14, 7, b } ;
         }
     }
 }
@@ -622,11 +674,14 @@ void Load_static(
     double& Penalty,
     double& Xgravity,
     double& Ygravity,
-    int& Activate_plot,
-    double& Xmin_plot,
-    double& Xmax_plot,
-    double& Ymin_plot,
-    double& Ymax_plot,
+    double& Chains_typical_pressure,
+    double& Chains_size_ratio,
+    double& Fields_xmin,
+    double& Fields_xmax,
+    double& Fields_ymin,
+    double& Fields_ymax,
+    double& Fields_step,
+    double& Fields_dist,
     int& Nb_monitored,
     vector<vector<double>>& Monitored,
     int& Nb_deactivated,
@@ -643,6 +698,7 @@ void Load_static(
     cout << "Loading static control" << endl ;
     int index_body = 0 ;
     int nb(0), ndef(0), nr(0), nn(0), nd(0), ng(0) ;
+
     ifstream Static_Control_file ("STATIC_CONTROL.asc") ;
     string line ;
     string token ;
@@ -766,10 +822,10 @@ void Load_static(
                 }
                 else if (type=="CZMlinear")
                 {
-                    double p1, p2, p3, p4, p5, p6 ;
-                    Static_Control_file >> p1 >> p2 >> p3 >> p4 >> p5 >> p6 ;
+                    double p1, p2, p3, p4, p5, p6 ,p7;
+                    Static_Control_file >> p1 >> p2 >> p3 >> p4 >> p5 >> p6 >> p7 ;
                     getline(Static_Control_file, token) ;
-                    vector<double> parameters({p1, p2, p3, p4, p5, p6}) ;
+                    vector<double> parameters({p1, p2, p3, p4, p5, p6, p7}) ;
                     Contact_law law ( i, material1, material2, type, length_evolution, parameters ) ;
                     Contact_laws.push_back(law) ;
                 }
@@ -784,8 +840,8 @@ void Load_static(
                 }
                 else if (type=="BondedMohrCoulomb")
                 {
-                    double p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11 ;
-                    Static_Control_file >> p1 >> p2 >> p3 >> p4 >> p5 >> p6 >> p7 >> p8 >> p9 >> p10 >> p11 ;
+                    double p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11;
+                    Static_Control_file >> p1 >> p2 >> p3 >> p4 >> p5 >> p6 >> p7 >> p8 >> p9 >> p10 >> p11;
                     getline(Static_Control_file, token) ;
                     vector<double> parameters({p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11}) ;
                     Contact_law law ( i, material1, material2, type, length_evolution, parameters ) ;
@@ -887,10 +943,6 @@ void Load_static(
                 cout << Save_period << ' ' << Print_period << ' ' << Contact_update_period << endl ;
                 Inv_Target_error = 1 / Target_error ;
             }
-
-
-
-
         }
 
         if (line.substr(0,19)=="PERIODIC_BOUNDARIES")
@@ -914,20 +966,20 @@ void Load_static(
             cout << "Gravity " << Xgravity << ' ' << Ygravity << endl ;
         }
 
-        if (line.substr(0,8)=="PLOTTING")
-        {
-            Static_Control_file >> Activate_plot ;
-            getline(Static_Control_file, token) ;
-            Static_Control_file >> Xmin_plot >> Xmax_plot >> Ymin_plot >> Ymax_plot ;
-            getline(Static_Control_file, token) ;
-        }
+        //if (line.substr(0,8)=="PLOTTING")
+        //{
+        //    Static_Control_file >> Activate_plot ;
+        //    getline(Static_Control_file, token) ;
+        //    Static_Control_file >> Xmin_plot >> Xmax_plot >> Ymin_plot >> Ymax_plot ;
+        //    getline(Static_Control_file, token) ;
+        //}
 
         if (line.substr(0,13)=="NUMBER_BODIES")
         {
             Static_Control_file >> Nb_bodies ;
             getline(Static_Control_file, token) ;
             cout << "Nb bodies " << Nb_bodies << endl ;
-        }
+        } 
 
         //
         if (line.substr(0,10)=="MONITORING")
@@ -944,28 +996,27 @@ void Load_static(
             }
         }
 
-        if (line.substr(0,12)=="DEACTIVATION")
+        if (line.substr(0,14)=="GRAPHIC_GRAINS")
         {
-            Static_Control_file >> Nb_deactivated ;
-            getline(Static_Control_file, token) ;
-            cout << "Nb possible deactivations " << Nb_deactivated << endl ;
-            double threshold ;
-            string Keyword ;
-            vector<double> New_Read ;
-            for (int i(0) ; i < Nb_deactivated ; i++)
+            int j ;
+            for (int i(0) ; i < 44 ; i++)
             {
-                Read_spy_line(New_Read, Static_Control_file) ;
-                Static_Control_file >> Keyword >> threshold ;
-                if (Keyword == "below")
-                    New_Read.push_back(0.) ;
-                else if (Keyword == "equal")
-                    New_Read.push_back(1.) ;
-                else if (Keyword == "above")
-                    New_Read.push_back(2.) ;
-                New_Read.push_back(threshold) ;
-                Deactivated.push_back(New_Read) ;
+                Static_Control_file >> j >> token ;
                 getline(Static_Control_file, token) ;
+                To_Plot[i] = j ;
             }
+        }
+
+        if (line.substr(0,14)=="GRAPHIC_CHAINS")
+        {
+            Static_Control_file >> Chains_typical_pressure >> Chains_size_ratio ;
+            getline(Static_Control_file, token) ;
+        }
+
+        if (line.substr(0,14)=="GRAPHIC_FIELDS")
+        {
+            Static_Control_file >> Fields_xmin >> Fields_xmax >> Fields_ymin >> Fields_ymax >> Fields_step >> Fields_dist ;
+            getline(Static_Control_file, token) ;
         }
 
         if (line.substr(0,5)=="SPIES")
@@ -997,15 +1048,27 @@ void Load_static(
             }
         }
 
-        if (line.substr(0,7)=="GRAPHIC")
+        if (line.substr(0,12)=="DEACTIVATION")
         {
-            int j ;
-
-            for (int i(0) ; i < 41 ; i++)
+            Static_Control_file >> Nb_deactivated ;
+            getline(Static_Control_file, token) ;
+            cout << "Nb possible deactivations " << Nb_deactivated << endl ;
+            double threshold ;
+            string Keyword ;
+            vector<double> New_Read ;
+            for (int i(0) ; i < Nb_deactivated ; i++)
             {
-                Static_Control_file >> j >> token ;
+                Read_spy_line(New_Read, Static_Control_file) ;
+                Static_Control_file >> Keyword >> threshold ;
+                if (Keyword == "below")
+                    New_Read.push_back(0.) ;
+                else if (Keyword == "equal")
+                    New_Read.push_back(1.) ;
+                else if (Keyword == "above")
+                    New_Read.push_back(2.) ;
+                New_Read.push_back(threshold) ;
+                Deactivated.push_back(New_Read) ;
                 getline(Static_Control_file, token) ;
-                To_Plot[i] = j ;
             }
         }
 
@@ -1489,7 +1552,7 @@ void Load_static(
     cout << endl ;
     cout << "Loading static data" << endl ;
     ifstream Static_Data_file ("STATIC_DATA.asc") ;
-    while(getline(Static_Data_file, line))
+    while(getline(Static_Data_file, line))\
     {
         if (line.substr(0,10)=="DEFORMABLE")
         {
@@ -1931,6 +1994,10 @@ void Load_dynamic(
             flags[9] = 1 ;
         if (line.substr(0,10)=="RESET_WORK")
             flags[10] = 1 ;
+        if (line.substr(0,21)=="UPDATE_INITIAL_DAMAGE")
+            flags[11] = 1 ;
+        if (line.substr(0,7)=="NEWSTEP")
+            flags[12] = 1 ;
 
 
         if (line.substr(0,6)=="SOLVER")
@@ -2154,6 +2221,17 @@ void Load_dynamic(
                 Bodies[index_body].damping_work = 0. ;
                 Bodies[index_body].alid_work = 0. ;
             }
+            Bodies[index_body].temperature = -(Bodies[index_body].contact_work + Bodies[index_body].damping_work) / (Bodies[index_body].mass * Bodies[index_body].heat_capacity) ;
+            //cout << "Neighbours" << endl ;
+        }
+
+
+        if (line.substr(0,14)=="INITIAL_DAMAGE")
+        {
+            double id ;
+            Dynamic_file >> id ;
+            getline(Dynamic_file, token) ;
+            Bodies[index_body].initial_damage = id ;
             //cout << "Neighbours" << endl ;
         }
 
@@ -2506,6 +2584,10 @@ void Write_dynamic(
                      << Bodies[i].neumann_work << ' '
                      << Bodies[i].damping_work << ' '
                      << Bodies[i].alid_work << endl ;
+        Dynamic_file << endl ;
+
+        Dynamic_file << "INITIAL_DAMAGE" << endl ;
+        Dynamic_file << Bodies[i].initial_damage << endl ;
         Dynamic_file << endl ;
 
         Dynamic_file << "NEIGHBOURS" << endl ;

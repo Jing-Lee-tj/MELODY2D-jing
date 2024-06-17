@@ -2,16 +2,16 @@ function [NUMBER_BODIES,NUMBER_RIGIDS,BODIES_STATIC,BODIES_DYNAMIC,BODIES_CURREN
 disp(' ')
 disp('Preprocessing')
 disp(' ')
-addpath('C:\MESHFREE\PREPRO\Distmesh')
+addpath('C:\Users\ncasas\Documents\MELODY_CODE\MELODY2D_3.92\Preprocessor\Distmesh\')
 %NUMBER_BODIES=size(Contours,1);
 NUMBER_BODIES=0;
 NUMBER_RIGIDS=0;
-for Body=1:size(Contours,1);
+for Body=1:size(Contours,1)
     tic
     Distribution_Type=Distributions{Body,1};
     Shape_Type=Interpolations{Body,1};
     Body_Support_Domain=Interpolations{Body,2};
-    if strcmp(Distribution_Type,'Structured') | strcmp(Distribution_Type,'Unstructured') | strcmp(Distribution_Type,'Manual')
+    if strcmp(Distribution_Type,'Structured') || strcmp(Distribution_Type,'Unstructured') || strcmp(Distribution_Type,'Manual')
         NUMBER_BODIES=NUMBER_BODIES+1;
         CLASS='Body';
         disp(['   Body ',int2str(Body),'/',int2str(NUMBER_BODIES)])
@@ -24,7 +24,7 @@ for Body=1:size(Contours,1);
     NUMBER_REGIONS=Distributions{Body,3};
     MATERIAL=Bodies_Materials{Body,1};
     Mesh_Ratio=Mesh_Ratios(Body,:);
-    if strcmp(Contours{Body,1}{1,1},'Closed') & size(Contours{Body,1},1)==1
+    if strcmp(Contours{Body,1}{1,1},'Closed') && size(Contours{Body,1},1)==1
         % Bodies with closed contours
         disp('       Positionning Nodes')
         Contour=Contours{Body,1}{1,2};
@@ -44,7 +44,7 @@ for Body=1:size(Contours,1);
         NUMBER_NODES=size(INITIAL_POSITIONS,1);
         NUMBER_CELLS=size(TRIANGULATION,1);
         TYPE='Simple';
-        if strcmp(Distribution_Type,'Structured') | strcmp(Distribution_Type,'Unstructured') | strcmp(Distribution_Type,'Manual') 
+        if strcmp(Distribution_Type,'Structured') || strcmp(Distribution_Type,'Unstructured') || strcmp(Distribution_Type,'Manual') 
             disp('       Precomputing Numerical Integration')
             [INFLUENCE_DOMAINS,MASSES,INVERSE_MASSES,STIFFNESS_MATRIX,DAMPING_MATRIX,BODY_FORCES,INTEGRATION,INTEGRATION_TYPE,DOF_TO_DISP]=AnalyseSimpleBody(NUMBER_NODES,INITIAL_POSITIONS,NUMBER_CELLS,TRIANGULATION,MATERIAL,Materials,Body_Support_Domain,Gravity,Integrations{Body,2},Integrations{Body,1},Shape_Type);
             CENTRE_OF_MASS=[];
@@ -61,7 +61,7 @@ for Body=1:size(Contours,1);
         %
         %
         %
-    elseif strcmp(Contours{Body,1}{1,1},'Closed') & size(Contours{Body,1},1)==2
+    elseif strcmp(Contours{Body,1}{1,1},'Closed') && size(Contours{Body,1},1)==2
         % Bodies with closed contour and a hole
         disp('       Positionning Nodes')
         Contour1=Contours{Body,1}{1,2};
@@ -77,7 +77,7 @@ for Body=1:size(Contours,1);
         NUMBER_NODES=size(INITIAL_POSITIONS,1);
         NUMBER_CELLS=size(TRIANGULATION,1);
         TYPE='Simple';
-        if strcmp(Distribution_Type,'Structured') | strcmp(Distribution_Type,'Unstructured') | strcmp(Distribution_Type,'Manual') 
+        if strcmp(Distribution_Type,'Structured') || strcmp(Distribution_Type,'Unstructured') || strcmp(Distribution_Type,'Manual') 
             disp('       Precomputing Numerical Integration')
             [INFLUENCE_DOMAINS,MASSES,INVERSE_MASSES,STIFFNESS_MATRIX,DAMPING_MATRIX,BODY_FORCES,INTEGRATION,INTEGRATION_TYPE,DOF_TO_DISP]=AnalyseSimpleBody(NUMBER_NODES,INITIAL_POSITIONS,NUMBER_CELLS,TRIANGULATION,MATERIAL,Materials,Body_Support_Domain,Gravity,Integrations{Body,2},Integrations{Body,1},Shape_Type);
             CENTRE_OF_MASS=[];
@@ -94,14 +94,14 @@ for Body=1:size(Contours,1);
         %
         %
         %
-    elseif strcmp(Contours{Body,1}{1,1},'Periodic') & strcmp(Contours{Body,1}{2,1},'Periodic')
+    elseif strcmp(Contours{Body,1}{1,1},'Periodic') && strcmp(Contours{Body,1}{2,1},'Periodic')
         % Bodies with periodic contours
         disp('       Positionning Nodes')
         Contour1=Contours{Body,1}{1,2};
         Contour2=Contours{Body,1}{2,2};
         Interpolant1=Contours{Body,1}{1,3};
         Interpolant2=Contours{Body,1}{2,3};
-        if strcmp(Distribution_Type,'Structured') | strcmp(Distribution_Type,'Unstructured')
+        if strcmp(Distribution_Type,'Structured') || strcmp(Distribution_Type,'Unstructured')
             [INITIAL_POSITIONS,BORDERS,TRIANGULATION]=SetUnstructuredNodesForPeriodicContours(Contour1,Contour2,Interpolant1,Interpolant2,NODAL_DISTANCE,Mesh_Ratio,Periodic_Boundaries,Activate_Plot);
             %save('Temp.mat','INITIAL_POSITIONS','BORDERS','TRIANGULATION');
             %load('Temp.mat');
@@ -111,7 +111,7 @@ for Body=1:size(Contours,1);
         NUMBER_NODES=size(INITIAL_POSITIONS,1);
         NUMBER_CELLS=size(TRIANGULATION,1);
         TYPE='Periodic';
-        if strcmp(Distribution_Type,'Structured') | strcmp(Distribution_Type,'Unstructured')
+        if strcmp(Distribution_Type,'Structured') || strcmp(Distribution_Type,'Unstructured')
             disp('       Precomputing Numerical Integration')
             [INFLUENCE_DOMAINS,MASSES,INVERSE_MASSES,STIFFNESS_MATRIX,DAMPING_MATRIX,BODY_FORCES,INTEGRATION,INTEGRATION_TYPE,DOF_TO_DISP]=AnalysePeriodicBody(NUMBER_NODES,INITIAL_POSITIONS,NUMBER_CELLS,TRIANGULATION,NODAL_DISTANCE,Mesh_Ratio,MATERIAL,Materials,Body_Support_Domain,Gravity,Periodic_Boundaries,Integrations{Body,2},Integrations{Body,1},Shape_Type);
             CENTRE_OF_MASS=[];
@@ -125,14 +125,14 @@ for Body=1:size(Contours,1);
             INTEGRATION_TYPE=[];
             DOF_TO_DISP=[];
         end
-    elseif strcmp(Contours{Body,1}{1,1},'PeriodicPolygon') & strcmp(Contours{Body,1}{2,1},'PeriodicPolygon')
+    elseif strcmp(Contours{Body,1}{1,1},'PeriodicPolygon') && strcmp(Contours{Body,1}{2,1},'PeriodicPolygon')
         % Bodies with periodic contours
         disp('       Positionning Nodes')
         Contour1=Contours{Body,1}{1,2};
         Contour2=Contours{Body,1}{2,2};
         Interpolant1=Contours{Body,1}{1,3};
         Interpolant2=Contours{Body,1}{2,3};
-        if strcmp(Distribution_Type,'Structured') | strcmp(Distribution_Type,'Unstructured')
+        if strcmp(Distribution_Type,'Structured') || strcmp(Distribution_Type,'Unstructured')
             [INITIAL_POSITIONS,BORDERS,TRIANGULATION]=SetUnstructuredNodesForPeriodicPolygonContours(Contour1,Contour2,Interpolant1,Interpolant2,NODAL_DISTANCE,Mesh_Ratio,Periodic_Boundaries,Activate_Plot);
         elseif strcmp(Distribution_Type,'Rigid')
             [INITIAL_POSITIONS,BORDERS,TRIANGULATION]=SetUnstructuredNodesForPeriodicPolygonContours(Contour1,Contour2,Interpolant1,Interpolant2,NODAL_DISTANCE,Mesh_Ratio,Periodic_Boundaries,Activate_Plot);
@@ -140,7 +140,7 @@ for Body=1:size(Contours,1);
         NUMBER_NODES=size(INITIAL_POSITIONS,1);
         NUMBER_CELLS=size(TRIANGULATION,1);
         TYPE='Periodic';
-        if strcmp(Distribution_Type,'Structured') | strcmp(Distribution_Type,'Unstructured')
+        if strcmp(Distribution_Type,'Structured') || strcmp(Distribution_Type,'Unstructured')
             disp('       Precomputing Numerical Integration')
             [INFLUENCE_DOMAINS,MASSES,INVERSE_MASSES,STIFFNESS_MATRIX,DAMPING_MATRIX,BODY_FORCES,INTEGRATION,INTEGRATION_TYPE,DOF_TO_DISP]=AnalysePeriodicBody(NUMBER_NODES,INITIAL_POSITIONS,NUMBER_CELLS,TRIANGULATION,NODAL_DISTANCE,Mesh_Ratio,MATERIAL,Materials,Body_Support_Domain,Gravity,Periodic_Boundaries,Integrations{Body,2},Integrations{Body,1},Shape_Type);
             CENTRE_OF_MASS=[];
@@ -154,7 +154,7 @@ for Body=1:size(Contours,1);
             INTEGRATION_TYPE=[];
             DOF_TO_DISP=[];
         end
-    elseif strcmp(Contours{Body,1}{1,1},'Polygon') & size(Contours{Body,1},1)==1
+    elseif strcmp(Contours{Body,1}{1,1},'Polygon') && size(Contours{Body,1},1)==1
         % Bodies with polygonal closed contours
         disp('       Positionning Nodes')
         Contour=Contours{Body,1}{1,2};
@@ -228,7 +228,7 @@ for Body=1:size(Contours,1);
         if strcmp(Distribution_Type,'Structured')
             [INITIAL_POSITIONS,BORDERS,TRIANGULATION]=SetStructuredNodesForSimpleContours(Contours{Body,1},NODAL_DISTANCE);
         elseif strcmp(Distribution_Type,'Unstructured')
-            [INITIAL_POSITIONS,BORDERS,TRIANGULATION]=SetUnstructuredNodesForSimpleContours(Contours{Body,1},NODAL_DISTANCE,Activate_Plot);
+            [INITIAL_POSITIONS,BORDERS,TRIANGULATION]=SetUnstructuredNodesForSimpleContours(Contours{Body,1},NODAL_DISTANCE,Mesh_Ratio,Activate_Plot);
         elseif strcmp(Distribution_Type,'Manual')
             INITIAL_POSITIONS=Distributions{Body,4};
             TRIANGULATION=Distributions{Body,5};

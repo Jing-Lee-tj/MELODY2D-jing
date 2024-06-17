@@ -412,4 +412,202 @@ double Triangle_inertia(double x0, double y0, double x1, double y1, double x2, d
     return abs( inertia / 6. ) ;
 }
 
+
+
+//********************************************//
+//** DILATE **********************************//
+//********************************************//
+
+void Dilate(vector<vector<int>>& Image, vector<vector<int>>& Target, int Msize)
+{
+    int ixstart, ixend, iystart, iyend ;
+    vector<int> l ;
+    for (int i=0 ; i < 2 * Msize + 1 ; i++)
+        l.push_back(0) ;
+    vector<vector<int>> Mask ;
+    for (int i=0 ; i < 2 * Msize + 1 ; i++)
+        Mask.push_back(l) ;
+    for (int i=0 ; i < 2 * Msize + 1 ; i++)
+    {
+        for (int j=0 ; j < 2 * Msize + 1 ; j++)
+        {
+            if ((i-Msize)*(i-Msize)+(j-Msize)*(j-Msize)<=Msize*Msize)
+            {
+                Mask[i][j] = 1 ;
+            }
+            //cout << Mask[i][j] << ' ' ;
+        }
+        //cout << endl ;
+    }
+    for (int IX(0) ; IX<(int)Image.size() ; IX++)
+    {
+        for (int IY(0) ; IY<(int)Image[0].size() ; IY++)
+        {
+            if (Image[IX][IY] == 0)
+                continue ;
+            ixstart = max( -Msize , -IX ) ;
+            ixend = min( Msize+1 , (int)Image.size()-IX ) ;
+            iystart = max( -Msize , -IY ) ;
+            iyend = min( Msize+1 , (int)Image[0].size()-IY ) ;
+            for (int ix(ixstart) ; ix<ixend ; ix++)
+            {
+                for (int iy(iystart) ; iy<iyend ; iy++)
+                {
+                    Target[IX+ix][IY+iy] = max( Mask[Msize+ix][Msize+iy] , max( Image[IX+ix][IY+iy] , Target[IX+ix][IY+iy] )) ;
+                }
+            }
+        }
+    }
+}
+
+
+
+//********************************************//
+//** ERODE ***********************************//
+//********************************************//
+
+void Erode(vector<vector<int>>& Image, vector<vector<int>>& Target, int Msize)
+{
+    Target = Image ;
+    int ixstart, ixend, iystart, iyend ;
+    vector<int> l ;
+    for (int i=0 ; i < 2 * Msize + 1 ; i++)
+        l.push_back(1) ;
+    vector<vector<int>> Mask ;
+    for (int i=0 ; i < 2 * Msize + 1 ; i++)
+        Mask.push_back(l) ;
+    for (int i=0 ; i < 2 * Msize + 1 ; i++)
+    {
+        for (int j=0 ; j < 2 * Msize + 1 ; j++)
+        {
+            if ((i-Msize)*(i-Msize)+(j-Msize)*(j-Msize)<=Msize*Msize)
+            {
+                Mask[i][j] = 0 ;
+            }
+            //cout << Mask[i][j] << ' ' ;
+        }
+        //cout << endl ;
+    }
+    for (int i=0 ; i < 2 * Msize + 1 ; i++)
+    {
+        for (int j=0 ; j < 2 * Msize + 1 ; j++)
+        {
+            Mask[i][j] = 1 - Mask[i][j] ;
+        }
+    }
+    for (int IX(0) ; IX<(int)Image.size() ; IX++)
+    {
+        for (int IY(0) ; IY<(int)Image[0].size() ; IY++)
+        {
+            if (Image[IX][IY] == 1)
+                continue ;
+            ixstart = max( -Msize , -IX ) ;
+            ixend = min( Msize+1 , (int)Image.size()-IX ) ;
+            iystart = max( -Msize , -IY ) ;
+            iyend = min( Msize+1 , (int)Image[0].size()-IY ) ;
+            for (int ix(ixstart) ; ix<ixend ; ix++)
+            {
+                for (int iy(iystart) ; iy<iyend ; iy++)
+                {
+                    Target[IX+ix][IY+iy] = min( Mask[Msize+ix][Msize+iy] , min( Image[IX+ix][IY+iy] , Target[IX+ix][IY+iy] )) ;
+                }
+            }
+        }
+    }
+}
+
+
+
+//********************************************//
+//** CONVOLUTE *******************************//
+//********************************************//
+
+void Convolute(vector<vector<int>>& Image, vector<vector<double>>& Target, string MaskType, int Msize)
+{
+    int ixstart, ixend, iystart, iyend ;
+    vector<double> l ;
+    for (int i=0 ; i < 2 * Msize + 1 ; i++)
+        l.push_back(0.) ;
+    vector<vector<double>> Mask ;
+    for (int i=0 ; i < 2 * Msize + 1 ; i++)
+        Mask.push_back(l) ;
+    double t = 0. ;
+    if (MaskType == "Square")
+    {
+        for (int i=0 ; i < 2 * Msize + 1 ; i++)
+        {
+            for (int j=0 ; j < 2 * Msize + 1 ; j++)
+            {
+                Mask[i][j] = 1. ;
+                t++ ;
+            }
+        }
+    }
+    else if (MaskType == "Disc")
+    {
+        for (int i=0 ; i < 2 * Msize + 1 ; i++)
+        {
+            for (int j=0 ; j < 2 * Msize + 1 ; j++)
+            {
+                if ((i-Msize)*(i-Msize)+(j-Msize)*(j-Msize)<=Msize*Msize)
+                {
+                    Mask[i][j] = 1. ;
+                    t++ ;
+                }
+            }
+        }
+    }
+    else if (MaskType == "Gauss")
+    {
+        int r2 ;
+        double v ;
+        for (int i=0 ; i < 2 * Msize + 1 ; i++)
+        {
+            for (int j=0 ; j < 2 * Msize + 1 ; j++)
+            {
+                r2 = (i-Msize) * (i-Msize) + (j-Msize) * (j-Msize) ;
+                if (r2 <= Msize * Msize)
+                {
+                    v = exp(-4.*r2/(Msize*Msize)) - exp(-4.) ;
+                    Mask[i][j] = v ;
+                    t += v ;
+                }
+            }
+        }
+    }
+    for (int i=0 ; i < 2 * Msize + 1 ; i++)
+    {
+        for (int j=0 ; j < 2 * Msize + 1 ; j++)
+        {
+            Mask[i][j] /= t ;
+            //cout << Mask[i][j] << ' ' ;
+        }
+        //cout << endl ;
+    }
+
+
+    for (int IX(0) ; IX<(int)Image.size() ; IX++)
+    {
+        for (int IY(0) ; IY<(int)Image[0].size() ; IY++)
+        {
+            ixstart = max( -Msize , -IX ) ;
+            ixend = min( Msize+1 , (int)Image.size()-IX ) ;
+            iystart = max( -Msize , -IY ) ;
+            iyend = min( Msize+1 , (int)Image[0].size()-IY ) ;
+            for (int ix(ixstart) ; ix<ixend ; ix++)
+            {
+                for (int iy(iystart) ; iy<iyend ; iy++)
+                {
+                    Target[IX+ix][IY+iy] += Image[IX][IY]*Mask[Msize+ix][Msize+iy] ;
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
+
 #endif

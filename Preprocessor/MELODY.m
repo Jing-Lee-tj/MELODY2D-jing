@@ -5,7 +5,7 @@
 %%                 for DYnamic simulation                %%
 %%                                                       %%
 %%                     Main Program                      %%
-%%               Version 3.11 ; May 2019                 %%
+%%             Version 3.13 ; February 2020              %%
 %%                                                       %%
 %%                Author: Guilhem Mollon                 %%
 %%                                                       %%
@@ -18,10 +18,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear all
-
+addpath(genpath(pwd))
 %%% Preprocessing %%%
-MELODYLoadData_Example;
-global NUMBER_BODIES BODIES_STATIC BODIES_DYNAMIC BODIES_CURRENT MATERIALS CONTACT_LAWS GRAPHIC_BOUNDARIES PERIODIC_BOUNDARIES GRAVITY
+% MELODYLoadData_two_step;
+% MELODYLoadData_directshear_load_rigid;
+MELODYLoadData_contact_test;
+% MELODYLoadData_Inertia_number;
+% MELODYLoadData_directshear_load_rigid
+global NUMBER_BODIES NUMBER_RIGIDS BODIES_STATIC BODIES_DYNAMIC BODIES_CURRENT MATERIALS CONTACT_LAWS GRAPHIC_BOUNDARIES PERIODIC_BOUNDARIES GRAVITY
 mkdir(Simulation_Name);
 disp(' ')
 [NUMBER_BODIES,NUMBER_RIGIDS,BODIES_STATIC,BODIES_DYNAMIC,BODIES_CURRENT,MATERIALS,CONTACT_LAWS,TIME_INI,TIME_STEP,TIME_END,TIME,SAVE_PERIOD,PRINT_PERIOD,CONTACT_UPDATING_PERIOD,PERIODIC_BOUNDARIES,SCHEME,TARGET_ERROR,CONTROL_PARAMETER,ACCEPTED_RATIO,GRAVITY,MONITORINGS,DEACTIVATIONS,SPIES]=Preprocessing(Contours,Distributions,Interpolations,Integrations,Detections,Mesh_Ratios,Materials,Contact_Laws,Bodies_Materials,Imposed_Pressures,Imposed_Velocities,Initial_Velocities,Periodic_Boundaries,Gravity,Time_Stepping_Parameters,Save_Periods,Contact_Updating_Period,Scheme,Scheme_Parameters,Activate_Plot,Monitorings,Deactivations,Spies,Status,Alid);
