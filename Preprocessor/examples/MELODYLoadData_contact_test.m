@@ -163,8 +163,8 @@ To_Plot(42)=0;  % Scaling Parameter
 To_Plot(43)=0;  % Active Contacts
 To_Plot(44)=0;  % Contacting Bodies
 
-Chains_Parameters = [10e6,1];
-Fields_Parameters = [xmin xmax ymin ymax 0.001 0.0005];
+Chains_Parameters = [10e6,1,0];
+Fields_Parameters = [xmin xmax ymin ymax 0.001 0.0005 0];
 
 % 8. Numerical parameters
 Scheme='Adaptive_Euler';

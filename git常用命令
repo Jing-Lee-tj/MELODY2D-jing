@@ -1,0 +1,43 @@
+#添加文件到暂存区
+git add . #添加当前目录下所有文件
+git add -u #添加已删除的文件
+git add -A #添加当前目录及其所有子目录中的所有文件和目录
+#创建分支
+git branch (branchname)
+git branch -d (branchname) #删除分支
+git branch --set-upstream-to=<remote>/<branch> master #设置当前分支的上游为remote的branch分支
+#切换分支
+git checkout (branchname) #切换到该分支
+git checkout -b (branchname) #创建新分支并立即切换
+#提交暂存区代码到本地仓库
+git commit -m “descriptions” 
+#自定义设置
+git config --global --list #列出当前用户设置
+git config --global --unset <name> #取消某项设置
+#本地初始化一个仓库
+git init  
+#合并分支
+git merge (branchname)
+; 推送服务器
+git push -u origin master #推送到origin master并设置为上游分支
+#远程仓库
+git remote #获取当前添加的远程仓库
+git remote add origin <远程仓库的链接地址> #添加远程仓库作为origin
+git remote -v show <仓库名字> #显示远程仓库的详细信息
+#查看仓库当前的状态，显示有变更的文件
+git status
+#比较文件的不同，即暂存区和工作区的差异
+git diff
+#回退版本
+git reset
+git reset --soft #撤销提交
+git reset --mixed #撤销提交并清空缓存区
+git reset --hard  #清空自上一次commit后对缓存区和工作区的任何修改
+git reset HEAD <dirname/> #撤销对文件夹下的提交并清空相应的缓存区
+#将文件从暂存区和工作区中删除
+git rm
+
+
+
+
+

@@ -1,4 +1,5 @@
 function [INITIAL_POSITIONS,BORDERS,TRIANGULATION]=SetUnstructuredNodesForSimpleContours(Contours,Average_Nodal_Distance,Mesh_Ratio,Activate_Plot)
+    global Mesh_Ratios_handle
 for i=1:size(Contours,1)
     if strcmp(Contours{i,1},'Simple')==0
         i=i-1;
@@ -47,7 +48,9 @@ Contour=cat(1,Contour,Contours{1,2}(1,1:2));
 % Position the field nodes and triangulate
 Box=[min(Contour(:,1)),min(Contour(:,2));max(Contour(:,1)),max(Contour(:,2))];
 %[INITIAL_POSITIONS,TRIANGULATION]=distmesh2d_plot(Activate_Plot,0.001,@dpoly,@huniform,Average_Nodal_Distance,Box,Contour,Contour);
-if Mesh_Ratio(3)==0 && Mesh_Ratio(4)==0
+if Mesh_Ratio(1)==-1
+    fh = Mesh_Ratios_handle{Mesh_Ratio(2),1};
+elseif Mesh_Ratio(3)==0 && Mesh_Ratio(4)==0
     xc=mean(Contour(1:end-1,1));
     yc=mean(Contour(1:end-1,2));
     rmax=max(((Contour(:,1)-xc).^2+(Contour(:,2)-yc).^2).^0.5);

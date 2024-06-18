@@ -2,7 +2,6 @@ function [NUMBER_BODIES,NUMBER_RIGIDS,BODIES_STATIC,BODIES_DYNAMIC,BODIES_CURREN
 disp(' ')
 disp('Preprocessing')
 disp(' ')
-addpath('C:\Users\ncasas\Documents\MELODY_CODE\MELODY2D_3.92\Preprocessor\Distmesh\')
 %NUMBER_BODIES=size(Contours,1);
 NUMBER_BODIES=0;
 NUMBER_RIGIDS=0;

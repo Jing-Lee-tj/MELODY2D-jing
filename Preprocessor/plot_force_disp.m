@@ -10,7 +10,7 @@ set(0, 'DefaultLegendFontSize', 18);
 % path = 'F:\Code-MELODY_3.92\Examples\direcshear_load_rigid';
 % path = 'C:\Users\jingli\Desktop';
 % path = 'F:\Code-MELODY_3.92\Examples\uniaxial'
-path = 'F:\LIGGGHTS-PUBLIC\examples\inertial_number';
+path = 'F:\MELODY2D-cuda\Preprocessor\contact_test_DMR';
 % path = 'F:\Code-MELODY_3.92\Examples\Samples_and_results\Data_from_simulation\dense_C_2500_95%';
 % % path = 'F:\Code-MELODY_3.92\Examples\contact_test_CZMLinear';
 filename = 'FORCE_DISP.asc';

@@ -676,12 +676,14 @@ void Load_static(
     double& Ygravity,
     double& Chains_typical_pressure,
     double& Chains_size_ratio,
+    double& Chains_enable,
     double& Fields_xmin,
     double& Fields_xmax,
     double& Fields_ymin,
     double& Fields_ymax,
     double& Fields_step,
     double& Fields_dist,
+    double& Fields_enable,
     int& Nb_monitored,
     vector<vector<double>>& Monitored,
     int& Nb_deactivated,
@@ -1009,13 +1011,13 @@ void Load_static(
 
         if (line.substr(0,14)=="GRAPHIC_CHAINS")
         {
-            Static_Control_file >> Chains_typical_pressure >> Chains_size_ratio ;
+            Static_Control_file >> Chains_typical_pressure >> Chains_size_ratio >> Chains_enable ;
             getline(Static_Control_file, token) ;
         }
 
         if (line.substr(0,14)=="GRAPHIC_FIELDS")
         {
-            Static_Control_file >> Fields_xmin >> Fields_xmax >> Fields_ymin >> Fields_ymax >> Fields_step >> Fields_dist ;
+            Static_Control_file >> Fields_xmin >> Fields_xmax >> Fields_ymin >> Fields_ymax >> Fields_step >> Fields_dist >> Fields_enable ;
             getline(Static_Control_file, token) ;
         }
 

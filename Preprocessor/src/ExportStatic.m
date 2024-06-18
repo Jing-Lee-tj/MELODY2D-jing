@@ -373,6 +373,8 @@ fprintf(fid_data,'%s\n','GRAPHIC_CHAINS');
 fprintf(fid_data,'%0.16g',Chains_Parameters(1));
 fprintf(fid_data,'%s',' ');
 fprintf(fid_data,'%0.16g\n',Chains_Parameters(2));
+fprintf(fid_data,'%s',' ');
+fprintf(fid_data,'%0.16g\n',Chains_Parameters(3));
 fprintf(fid_data,'%s\n',' ');
 fprintf(fid_data,'%s\n',' ');
 
@@ -389,6 +391,8 @@ fprintf(fid_data,'%s',' ');
 fprintf(fid_data,'%0.16g',Fields_Parameters(5));
 fprintf(fid_data,'%s',' ');
 fprintf(fid_data,'%0.16g\n',Fields_Parameters(6));
+fprintf(fid_data,'%s',' ');
+fprintf(fid_data,'%0.16g\n',Fields_Parameters(7));
 fprintf(fid_data,'%s\n',' ');
 fprintf(fid_data,'%s\n',' ');
 

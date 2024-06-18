@@ -38,8 +38,8 @@ int main(int argc, char **argv)
     int Number_save, Number_print, Number_iteration ;
     double Xmin_period, Xmax_period, Penalty ;
     double Xgravity, Ygravity ;
-    double Chains_typical_pressure, Chains_size_ratio ;
-    double Fields_xmin, Fields_xmax, Fields_ymin, Fields_ymax, Fields_step, Fields_dist ;
+    double Chains_typical_pressure, Chains_size_ratio, Chains_enable ;
+    double Fields_xmin, Fields_xmax, Fields_ymin, Fields_ymax, Fields_step, Fields_dist ,Fields_enable;
     int Nb_bodies ;
     vector<Body> Bodies ;
     int Nb_monitored ;
@@ -63,8 +63,8 @@ int main(int argc, char **argv)
                  Max_mass_scaling, Control_parameter_mass_scaling, Error_factor_mass_scaling, Decrease_factor_mass_scaling,
                  Save_period, Print_period, Contact_update_period,
                  Xmin_period, Xmax_period, Penalty, Xgravity, Ygravity,
-                 Chains_typical_pressure, Chains_size_ratio,
-                 Fields_xmin, Fields_xmax, Fields_ymin, Fields_ymax, Fields_step, Fields_dist,
+                 Chains_typical_pressure, Chains_size_ratio,Chains_enable,
+                 Fields_xmin, Fields_xmax, Fields_ymin, Fields_ymax, Fields_step, Fields_dist,Fields_enable,
                  Nb_monitored, Monitored, Nb_deactivated, Deactivated, Nb_spies, Spies,
                  Nb_regions, Regions, Nb_bodies, Bodies, To_Plot ) ;
 
