@@ -9,7 +9,7 @@ fault_width = mat_file.fault_width/1000; %mm
 fault_angle = mat_file.fault_angle;  %degree
 model_height= mat_file.model_height/1000; %mm
 % model_width = mat_file.model_width/1000;  %mm
-model_width = 0.0015;
+model_width = 0.002;
 VoronoiCells = mat_file.VoronoiCells;
 VoronoiVertices = mat_file.VoronoiVertices;
 ContoursGrains_voro = load_voro(VoronoiCells,VoronoiVertices);
@@ -18,7 +18,7 @@ ContoursGrains=mat_file.Contours;
 SampleProperties = mat_file.SampleProperties;
 DomainPoints = mat_file.DomainPoints/1000;
 Ngrains=size(ContoursGrains,1);
-first_bodies=3;
+first_bodies=2;
 numcpus = systeminfo();
 
 offset = (DomainPoints(1,1)+DomainPoints(3,1))/2;
@@ -43,38 +43,72 @@ Deactivations=cell(1,1);
 To_Plot=zeros(44,1);
 
 % 3. Bodies
-xmintemp = xmin_model;
-xmaxtemp = xmax_model;
-ymintemp = -0.0001;
-ymaxtemp = 0;
-Contours{1,1}={'Closed',[xmintemp,ymintemp;xmaxtemp,ymintemp;xmaxtemp,ymaxtemp;xmintemp,ymaxtemp],'Linear'};
-Distributions{1,1}={'Rigid'};
-Distributions{1,2}=4e-5;
+% xmintemp = xmin_model;
+% xmaxtemp = xmax_model;
+% ymintemp = -0.0001;
+% ymaxtemp = 0;
+% Contours{1,1}={'Closed',[xmintemp,ymintemp;xmaxtemp,ymintemp;xmaxtemp,ymaxtemp;xmintemp,ymaxtemp],'Linear'};
+% Distributions{1,1}={'Rigid'};
+% Distributions{1,2}=4e-5;
+% Distributions{1,3}=numcpus;
+% Interpolations{1,1}='MLS';
+% Interpolations{1,2}=10;
+% Integrations{1,1}='Gauss';
+% Integrations{1,2}=3;
+% Detections(1,1)=1e-5;
+% Detections(1,2)=1e-5;
+% Bodies_Materials{1,1}='baserock';
+% Imposed_Pressures{1,1}={[],'None',[],'None';...
+%     [],'None',[],'None';...
+%     };
+% Imposed_Velocities{1,1}={[0,0;1e6,0],'Driven',[],[0,0;1e6,0],'Driven',[];...
+%     [],'None',[],[],'None',[];...
+%     };
+% Initial_Velocities{1,1}=[0,0];
+% Mesh_Ratios(1,1:2)=[4,1];
+% Status{1,1}='active';
+% Alid{1,1}=[];
+% Alid{1,2}=[];
+% Alid{1,3}=[];
+
+Contours{1,1}={'Simple',[xmin_model,0;DomainPoints(1,1)-offset2,DomainPoints(1,2)],'Linear',4,2;...
+    'Simple',[DomainPoints(1,1)-offset2,DomainPoints(1,2);DomainPoints(4,1)-offset2,DomainPoints(4,2)],'Linear',1,3;...
+     'Simple',[DomainPoints(4,1)-offset2,DomainPoints(4,2);xmin_model,model_height],'Linear',2,4;...
+      'Simple',[xmin_model,model_height;xmin_model,0],'Linear',3,1};
+Distributions{1,1}={'Unstructured'};
+Distributions{1,2}=2E-5;
 Distributions{1,3}=numcpus;
 Interpolations{1,1}='MLS';
 Interpolations{1,2}=10;
 Integrations{1,1}='Gauss';
 Integrations{1,2}=3;
-Detections(1,1)=1e-5;
-Detections(1,2)=1e-5;
-Bodies_Materials{1,1}='baserock';
+Detections(1,1)=5e-7;
+Detections(1,2)=5e-7;
+Bodies_Materials{1,1}='Rock';
 Imposed_Pressures{1,1}={[],'None',[],'None';...
     [],'None',[],'None';...
+    [],'None',[],'None';...
+    [0,pressure;1e6,pressure],'Oriented',[],'None' ...
     };
-Imposed_Velocities{1,1}={[0,0;1e6,0],'Driven',[],[0,0;1e6,0],'Driven',[];...
+%note the driven is only applicable for rigids!
+Imposed_Velocities{1,1}={[],'None',[],[],'None',[];...
     [],'None',[],[],'None',[];...
-    };
+    [],'None',[],[0,0;1e-4,0;2e-4,-load_rate;1e6,-load_rate],'Soft',[1e15,0.3];...
+    [],'None',[],[],'None',[]};
 Initial_Velocities{1,1}=[0,0];
-Mesh_Ratios(1,1:2)=[4,1];
+Mesh_Ratios(1,1:2)=[-1,1];
+fh_left = fh_line([DomainPoints(1,1)-offset2,DomainPoints(1,2);DomainPoints(4,1)-offset2, ...
+    DomainPoints(4,2)],3e-5,6e-5,fault_width);
+Mesh_Ratios_handle{1,1} = fh_left;
 Status{1,1}='active';
 Alid{1,1}=[];
 Alid{1,2}=[];
 Alid{1,3}=[];
-
-Contours{2,1}={'Simple',[xmin_model,0;DomainPoints(1,1)-offset2,DomainPoints(1,2)],'Linear',4,2;...
-    'Simple',[DomainPoints(1,1)-offset2,DomainPoints(1,2);DomainPoints(4,1)-offset2,DomainPoints(4,2)],'Linear',1,3;...
-     'Simple',[DomainPoints(4,1)-offset2,DomainPoints(4,2);xmin_model,model_height],'Linear',2,4;...
-      'Simple',[xmin_model,model_height;xmin_model,0],'Linear',3,1};
+% 
+Contours{2,1}={'Simple',[DomainPoints(2,1),DomainPoints(2,2);xmax_model,0],'Linear',4,2;...
+    'Simple',[xmax_model,0;xmax_model,model_height],'Linear',1,3;...
+     'Simple',[xmax_model,model_height;DomainPoints(3,1),DomainPoints(3,2)],'Linear',2,4;...
+      'Simple',[DomainPoints(3,1),DomainPoints(3,2);DomainPoints(2,1),DomainPoints(2,2)],'Linear',3,1};
 Distributions{2,1}={'Unstructured'};
 Distributions{2,2}=2E-5;
 Distributions{2,3}=numcpus;
@@ -82,62 +116,28 @@ Interpolations{2,1}='MLS';
 Interpolations{2,2}=10;
 Integrations{2,1}='Gauss';
 Integrations{2,2}=3;
-Detections(2,1)=5e-6;
-Detections(2,2)=5e-6;
+Detections(2,1)=5e-7;
+Detections(2,2)=5e-7;
 Bodies_Materials{2,1}='Rock';
 Imposed_Pressures{2,1}={[],'None',[],'None';...
-    [],'None',[],'None';...
-    [],'None',[],'None';...
-    [0,pressure;1e6,pressure],'Oriented',[],'None' ...
-    };
-%note the driven is only applicable for rigids!
-Imposed_Velocities{2,1}={[],'None',[],[],'None',[];...
-    [],'None',[],[],'None',[];...
-    [],'None',[],[0,0;1e-4,0;2e-4,-load_rate;1e6,-load_rate],'Soft',[1e15,0.3];...
-    [],'None',[],[],'None',[]};
-Initial_Velocities{2,1}=[0,0];
-Mesh_Ratios(2,1:2)=[-1,1];
-fh_left = fh_line([DomainPoints(1,1)-offset2,DomainPoints(1,2);DomainPoints(4,1)-offset2, ...
-    DomainPoints(4,2)],3e-5,6e-5,fault_width);
-Mesh_Ratios_handle{1,1} = fh_left;
-Status{2,1}='active';
-Alid{2,1}=[];
-Alid{2,2}=[];
-Alid{2,3}=[];
-% 
-Contours{3,1}={'Simple',[DomainPoints(2,1),DomainPoints(2,2);xmax_model,0],'Linear',4,2;...
-    'Simple',[xmax_model,0;xmax_model,model_height],'Linear',1,3;...
-     'Simple',[xmax_model,model_height;DomainPoints(3,1),DomainPoints(3,2)],'Linear',2,4;...
-      'Simple',[DomainPoints(3,1),DomainPoints(3,2);DomainPoints(2,1),DomainPoints(2,2)],'Linear',3,1};
-Distributions{3,1}={'Unstructured'};
-Distributions{3,2}=2E-5;
-Distributions{3,3}=numcpus;
-Interpolations{3,1}='MLS';
-Interpolations{3,2}=10;
-Integrations{3,1}='Gauss';
-Integrations{3,2}=3;
-Detections(3,1)=5e-6;
-Detections(3,2)=5e-6;
-Bodies_Materials{3,1}='Rock';
-Imposed_Pressures{3,1}={[],'None',[],'None';...
     [0,-pressure;1e6,-pressure],'Oriented',[],'None';...
     [],'None',[],'None';...
     [],'None',[],'None';...
     };
 %note the driven is only applicable for rigids!
-Imposed_Velocities{3,1}={[],'None',[],[],'None',[];...
+Imposed_Velocities{2,1}={[],'None',[],[0,0;1e6,0],'Soft',[1e15,0.3];...
     [],'None',[],[],'None',[];...
     [],'None',[],[],'None',[];...
     [],'None',[],[],'None',[]};
-Initial_Velocities{3,1}=[0,0];
+Initial_Velocities{2,1}=[0,0];
 fh_right = fh_line([DomainPoints(3,1),DomainPoints(3,2);DomainPoints(2,1), ...
     DomainPoints(2,2)],3e-5,6e-5,fault_width);
-Mesh_Ratios(3,1:2)=[-1,2];
+Mesh_Ratios(2,1:2)=[-1,2];
 Mesh_Ratios_handle{2,1} = fh_right;
-Status{3,1}='active';
-Alid{3,1}=[];
-Alid{3,2}=[];
-Alid{3,3}=[];
+Status{2,1}='active';
+Alid{2,1}=[];
+Alid{2,2}=[];
+Alid{2,3}=[];
 
 for num=1:Ngrains
     %mm to m
@@ -152,15 +152,15 @@ for num=1:Ngrains
     Distributions{first_bodies+num,1}={'Rigid'};
     
     perimeter = SampleProperties(num,7)/1000; % m units
-    Distributions{first_bodies+num,2} = perimeter/17;
+    Distributions{first_bodies+num,2} = perimeter/18 ;
     % Distributions{first_bodies+num,2} = 2e-6;
-    Distributions{first_bodies+num,3}=numcpus;
+    Distributions{first_bodies+num,3}=2;
     Interpolations{first_bodies+num,1}='MLS';
     Interpolations{first_bodies+num,2}=10;
     Integrations{first_bodies+num,1}='Gauss';
     Integrations{first_bodies+num,2}=3;
-    Detections(first_bodies+num,1)=5e-6;
-    Detections(first_bodies+num,2)=5e-6;
+    Detections(first_bodies+num,1)=5e-7;
+    Detections(first_bodies+num,2)=5e-7;
     Bodies_Materials{first_bodies+num,1}='Gouge';
     Imposed_Pressures{first_bodies+num,1}={[],'None',[],'None';...
                             };
@@ -175,19 +175,16 @@ for num=1:Ngrains
 end
 
 % 4. Materials and contact laws
-Materials={'baserock','NeoHookean',[2700,0,0,0,0,0];...
-           'Gouge','NeoHookean',[2700,0,0,0,0,0];...
+Materials={'Gouge','NeoHookean',[2700,0,0,0,0,0];...
            'Rock','NeoHookean',[2700,0,0,70e9,0.29,0];...
            };
-Contact_Laws={'Gouge','Gouge','CZMlinear','Evolutive',[2e14,50e6,0.2e-6,10e6,1,1e-5,0.3];...
-    'Gouge','baserock','CZMlinear','Evolutive',[2e14,50e6,0.2e-6,10e6,1,1e-5,0.3];...
-    'Gouge','Rock','CZMlinear','Evolutive',[2e14,50e6,0.2e-6,10e6,1,1e-5,0.3];...
-    'Rock','baserock','DampedMohrCoulomb','Evolutive',[2e14,2e14,0.5,0,0,0.3];...     
+Contact_Laws={'Gouge','Gouge','CZMlinear','Evolutive',[4e14,50e6,0.2e-6,10e6,1,1e-5,0.3];...
+    'Gouge','Rock','CZMlinear','Evolutive',[4e14,50e6,0.2e-6,10e6,1,1e-5,0.3];...   
     };
 
 % 5. General boundary conditions
 Periodic_Boundaries=[2*xmin_model,2*xmax_model];
-Gravity=[0;-9.8];
+Gravity=[0;0];
 
 % 6. Text outputs
 Monitorings=cell(1,1);
@@ -249,6 +246,13 @@ Chains_Parameters = [45e6,1,0];
 Fields_Parameters = [-fault_width/2 DomainPoints(3,1) 0 model_height 0.0005 0.0001 0];
 
 % 8. Numerical parameters
+% for test
+% Scheme='Adaptive_Euler';
+% Scheme_Parameters=[0.0001 0.2 10];
+% Contact_Updating_Period=1e-8;
+% Time_Stepping_Parameters=[0,5e-10,0.002];
+% Save_Periods=[0.0000001,0.0000001];
+% start to run formally
 Scheme='Adaptive_Euler';
 Scheme_Parameters=[0.0001 0 1e20];
 Contact_Updating_Period=1e-8;
@@ -258,4 +262,4 @@ Save_Periods=[0.00005,0.00005];
 % 9. Flags
 Activate_Plot=0;
 Initialize_CZM=1;   
-NO_MONITORING = 1;
+NO_MONITORING=1; %to do:Perform related operations in preprocessing

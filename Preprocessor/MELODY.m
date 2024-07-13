@@ -23,7 +23,7 @@ addpath(genpath(pwd))
 % MELODYLoadData_two_step;
 % MELODYLoadData_directshear_load_rigid;
 % MELODYLoadData_contact_test;
-MELODYLoadData_fault
+MELODYLoadData_shear
 % MELODYLoadData_Inertia_number;
 % MELODYLoadData_directshear_load_rigid
 global NUMBER_BODIES NUMBER_RIGIDS BODIES_STATIC BODIES_DYNAMIC BODIES_CURRENT MATERIALS CONTACT_LAWS GRAPHIC_BOUNDARIES PERIODIC_BOUNDARIES GRAVITY

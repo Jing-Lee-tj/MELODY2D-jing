@@ -10,7 +10,7 @@ set(0, 'DefaultLegendFontSize', 18);
 % path = 'F:\Code-MELODY_3.92\Examples\direcshear_load_rigid';
 % path = 'C:\Users\jingli\Desktop';
 % path = 'F:\Code-MELODY_3.92\Examples\uniaxial'
-path = 'F:\MELODY2D-cuda\Preprocessor\contact_test_DMR';
+path = 'F:\个人文件\科研学术\程序代码\个人文件\MELODY_技术邻\MELODY附件\direcshear_load_rigid';
 % path = 'F:\Code-MELODY_3.92\Examples\Samples_and_results\Data_from_simulation\dense_C_2500_95%';
 % % path = 'F:\Code-MELODY_3.92\Examples\contact_test_CZMLinear';
 filename = 'FORCE_DISP.asc';
@@ -27,14 +27,14 @@ fycontact = data(:,6);
 % gapt = data(:,8)*1000;
 % contactpx = data(:,9);
 
-friction = abs(fxcontact./fycontact);
+friction = abs(fycontact./fxcontact);
 % figure('Name','xdisplacement') ;plot(time,xdisplacement);
 % xlabel('time/ms');ylabel('xdisplacement/mm')
 % figure('Name','ydisplacement') ;plot(time,ydisplacement);
 % xlabel('time/ms');ylabel('ydisplacement/mm')
-figure('Name','fxcontact');plot(time,abs(fxcontact));
+figure('Name','fxcontact');plot(time,abs(smooth(fxcontact)));
 xlabel('time/ms');ylabel('fxcontact/N')
-figure('Name','fycontact');plot(time,abs(fycontact));
+figure('Name','fycontact');plot(time,abs(smooth(fycontact)));
 xlabel('time/ms');ylabel('fycontact/N')
 % figure('Name','fycontact-ydisplacement');plot(abs(ydisplacement),abs(fycontact));
 % xlabel('ydisplacement/mm');ylabel('fycontact/N');
@@ -44,8 +44,9 @@ xlabel('time/ms');ylabel('fycontact/N')
 % xlabel('gapt/mm');ylabel('contactpx(N/m2)')
 % figure('Name','gapn-px');plot(abs(gapn),abs(contactpx));
 % xlabel('gapn/mm');ylabel('contactpx(N/m2)')
-figure('Name','friction');plot(xdisplacement,smooth(friction));
-xlabel('xdisplacement/mm');ylabel('friction')
+figure('Name','friction');plot(time,smooth(friction,100));
+xlabel('time/ms');ylabel('friction')
+% xlim([0.15 0.2])
 % figure() ;
 % figure() ;plot(xdisplacement,abs(fxcontact));
 

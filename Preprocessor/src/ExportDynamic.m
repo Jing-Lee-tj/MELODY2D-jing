@@ -43,6 +43,9 @@ fprintf(fid,'%s\n',' ');
 if Initialize_CZM==1
     fprintf(fid,'%s\n','INITIALIZE_CZM');
 end
+if NO_MONITORING==1
+    fprintf(fid,'%s\n','NO_MONITORING');
+end
 fprintf(fid,'%s\n','UPDATE_MASS_MATRIX');
 fprintf(fid,'%s\n','UPDATE_DAMPING_MATRIX');
 fprintf(fid,'%s\n',' ');
@@ -164,7 +167,7 @@ for Body=1:size(BODIES_DYNAMIC,1)
         fprintf(fid,'%s\n','%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
         fprintf(fid,'%s\n',' ');
         fprintf(fid,'%s\n','RIGID');
-        fprintf(fid,'%s\n','active');
+        fprintf(fid,'%s\n',BODIES_STATIC(Body,1).STATUS);
         fprintf(fid,'%0.16g\n',Body-1);
         fprintf(fid,'%s\n',' ');
 

@@ -256,6 +256,13 @@ int main(int argc, char **argv)
         //cout << "49" << endl ;
         if (flag_failure == 1)
         {
+            ofstream outfile("error_log.txt", ios::out | ios::app); 
+            if (outfile.is_open()) {
+                outfile << "Program computation failure\n";
+                outfile.close();
+            } else {
+            cout << "Unable to open file";
+            }
             cout << "Program computation failure";
             break ;
         }

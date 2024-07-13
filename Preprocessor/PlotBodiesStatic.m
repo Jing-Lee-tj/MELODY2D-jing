@@ -8,7 +8,7 @@ load('Random_Colors.mat')
 figure
 % for Body=1:NUMBER_RIGIDS
 % for Body = [954 4504]
-for Body=1:3
+for Body=1:2
     NUMBER_BORDERS=BODIES_STATIC(Body).NUMBER_BORDERS;
     x=BODIES_STATIC(Body).INITIAL_POSITIONS(:,1);
     y=BODIES_STATIC(Body).INITIAL_POSITIONS(:,2);
